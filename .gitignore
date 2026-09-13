@@ -1,0 +1,23 @@
+# Firebase / Env secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Backend build artifacts
+backend/target/
+*.class
+serviceAccountKey.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

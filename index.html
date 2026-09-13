@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Management System - Enterprise Cloud Portal</title>
+
+  <!-- DNS Preconnect: Establish connections BEFORE browser discovers them -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+
+  <!-- Preload Firebase SDK modules (browser fetches during HTML parse instead of waiting for JS import chain) -->
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js">
+
+  <!-- Preload local JS modules (eliminates sequential waterfall) -->
+  <link rel="modulepreload" href="firebase-config.js">
+  <link rel="modulepreload" href="auth.js">
+  <link rel="modulepreload" href="services/db-service.js">
+  <link rel="modulepreload" href="app.js">
+
+  <!-- Google Fonts: async load to prevent render-blocking -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Inline Critical CSS: Login screen renders INSTANTLY without waiting for style.css -->
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#fff;color:#0f172a;min-height:100vh;-webkit-font-smoothing:antialiased}
+    .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.96);backdrop-filter:blur(5px);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-weight:600;color:#64748b}
+    .spinner-large{width:44px;height:44px;border:4px solid #e2e8f0;border-top-color:#1d4ed8;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Split login layout visible immediately */
+    .login-split-container{display:flex;min-height:100vh;width:100%;background:#fff}
+    #view-admin{display:none}
+    #view-student{display:none}
+  </style>
+</head>
+<body>
+
+  <!-- Loading State Overlay: hidden by default, shown only when authenticated user data is loading -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="spinner-large"></div>
+    <p id="loading-overlay-text">Loading your portal...</p>
+  </div>
+
+  <!-- Failsafe: ensure overlay is always hidden even if Firebase/JS fails to load -->
+  <script>
+    (function() {
+      var MAX_WAIT = 600;
+      setTimeout(function() {
+        var el = document.getElementById('loading-overlay');
+        if (el) el.style.display = 'none';
+      }, MAX_WAIT);
+    })();
+  </script>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ============================================================ -->
+  <!-- 1. ADMIN LOGIN (EMAIL + PASSWORD ONLY) -->
+  <!-- ============================================================ -->
+  <div id="view-login" class="login-split-container">
+    <!-- Left Banner Column with JNTUA Campus Image & Emblem -->
+    <div class="login-left-banner"></div>
+
+    <!-- Right Form Panel -->
+    <div class="login-right-panel">
+      <!-- Ambient Background Accents -->
+      <div class="login-bg-decor top-right"></div>
+      <div class="login-bg-decor bottom-right"></div>
+
+      <div class="login-card-content">
+        <!-- Graduation Cap Header Icon -->
+        <div class="login-icon-badge">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+
+        <h1 class="login-main-title">Hostel Management System</h1>
+        <p id="login-header-subtext" class="login-subtext">Sign in to access your hostel portal</p>
+        <span id="login-header-title" style="display:none;">Administrator Sign In</span>
+
+        <!-- Role Selector Tabs -->
+        <div class="role-selector-wrapper">
+          <div class="role-tabs-container">
+            <button type="button" id="btn-role-admin" class="btn-role-tab active">
+              👨‍💼 Administrator
+            </button>
+            <button type="button" id="btn-role-student" class="btn-role-tab">
+              👨‍🎓 Student Resident
+            </button>
+          </div>
+          <input type="hidden" id="login-role" value="admin">
+        </div>
+
+        <!-- Main Login Form -->
+        <form id="form-login" class="login-form">
+          <div class="input-group">
+            <label for="login-email" id="login-email-label" class="sr-only">Email or Roll Number</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input 
+                type="text" 
+                id="login-email" 
+                placeholder="Email or Roll Number" 
+                required 
+                autocomplete="username"
+              >
+            </div>
+          </div>
+
+          <div class="input-group">
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input 
+                type="password" 
+                id="login-password" 
+                placeholder="Password" 
+                required 
+                autocomplete="current-password"
+              >
+              <button type="button" id="btn-toggle-password" class="btn-toggle-pass" title="Show/Hide Password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-login-submit" class="btn-login-blue">
+            Sign In
+          </button>
+
+          <!-- Login Error Display -->
+          <div id="login-error-message" style="display:none; background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; border-radius:10px; padding:12px 14px; font-size:13px; font-weight:600; text-align:center; margin-top:4px;"></div>
+        </form>
+
+        <!-- Footer Links -->
+        <div class="login-footer-links">
+          <a href="#forgot" id="btn-forgot-password" class="login-link">Forgot Password?</a>
+          <a href="mailto:support@jntua.ac.in" class="login-link">Need Help?</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FORGOT PASSWORD MODAL (FIREBASE AUTHENTICATION) -->
+  <!-- ============================================================ -->
+  <div id="modal-forgot-password" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Reset Admin Password</h3>
+        <button type="button" id="btn-close-forgot-modal" class="modal-close">&times;</button>
+      </div>
+      <p class="modal-desc">
+        Enter your registered administrator email address. A password reset link will be dispatched directly to your inbox via Firebase Authentication.
+      </p>
+      <form id="form-forgot-password">
+        <div class="input-group">
+          <label for="forgot-email">Account Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="forgot-email" placeholder="admin@example.com" required>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" id="btn-send-reset" class="btn-primary">Send Password Reset Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. ADMIN DASHBOARD VIEW (FULL MULTI-HOSTEL PRODUCTION PORTAL) -->
+  <!-- ============================================================ -->
+  <div id="view-admin" class="portal-layout" style="display: none; contain: layout style;">
+    
+    <!-- Exactly 13 Standard Admin Navigation Sidebar Items -->
+    <aside class="sidebar">
+      <div class="logo" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="logo-emoji">🏨</span>
+          <div>
+            <span>Hostel Management</span>
+            <small id="sidebar-hostel-subtitle">Loading hostel...</small>
+          </div>
+        </div>
+        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">◀</button>
+      </div>
+      <nav>
+        <a class="active" href="#dashboard">📊 Dashboard</a>
+        <a href="#students">👨‍🎓 Students</a>
+        <a href="#branches">🌳 Branches</a>
+        <a href="#rooms">🏠 Rooms</a>
+        <a href="#allotment">🔄 Allotment</a>
+        <a href="#attendance">📋 Attendance</a>
+        <a href="#complaints">⚠️ Complaints</a>
+        <a href="#fees">💰 Fees</a>
+        <a href="#announcements">📢 Announcements</a>
+        <a href="#mess">🍽️ Mess</a>
+        <a href="#payments">💳 Payments</a>
+        <a href="#settings">⚙️ Settings</a>
+        <a href="#logout" class="nav-logout">🚪 Logout</a>
+      </nav>
+      <div class="sidebar-user-footer">
+        <div class="sidebar-avatar">A</div>
+        <div class="sidebar-user-meta">
+          <span id="admin-display-name">Hostel Admin</span>
+          <small id="admin-display-email">admin@example.com</small>
+        </div>
+        <button class="sidebar-logout-icon btn-logout-trigger" title="Sign Out">🚪</button>
+      </div>
+    </aside>
+
+    <main>
+      <!-- Top Header Displaying Dynamic Hostel Name -->
+      <header>
+        <div class="header-left">
+          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; margin-right:12px; cursor:pointer;">☰ Menu</button>
+          <div class="header-titles">
+            <small>ENTERPRISE ADMIN PANEL</small>
+            <h1>Hostel Management System</h1>
+          </div>
+          <!-- REQUIRED: Dynamic Hostel Name at Top of Admin Dashboard -->
+          <div id="header-hostel-display" class="header-hostel-display">
+            <span class="hostel-loading-pulse">Loading hostel information...</span>
+          </div>
+        </div>
+
+        <div class="header-profile">
+          <div class="badge-role">ADMINISTRATOR</div>
+          <div class="avatar">A</div>
+          <button class="btn-logout-pill btn-logout-trigger">Sign Out</button>
+        </div>
+      </header>
+
+      <!-- 1. DASHBOARD OVERVIEW -->
+      <section id="dashboard">
+        <!-- Prominent Hostel Banner at Top of Dashboard -->
+        <div class="dashboard-hero-banner">
+          <div class="hero-content">
+            <div class="hero-tag">AUTHENTICATED HOSTEL SCOPE</div>
+            <h2>Welcome back, <span id="admin-welcome-name">Hostel Admin</span></h2>
+            <div id="dashboard-hostel-display" class="dashboard-hostel-showcase">
+              <span class="hostel-loading-pulse">Loading hostel information...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="title"><div><small>OVERVIEW</small><h2>Live System Analytics</h2></div></div>
+        
+        <!-- Live Real-Time Aggregate Stats -->
+        <div class="stats">
+          <div><span>👨‍🎓</span><small>Total Students</small><b id="stat-total-students">0</b></div>
+          <div><span>🏠</span><small>Total Rooms</small><b id="stat-total-rooms">0</b></div>
+          <div><span>🔴</span><small>Occupied Rooms</small><b id="stat-occupied-rooms">0</b></div>
+          <div><span>🟢</span><small>Available Rooms</small><b id="stat-available-rooms">0</b></div>
+        </div>
+
+        <!-- Live Instant Student Search -->
+        <div class="card">
+          <h3>Search Student in Hostel</h3>
+          <div class="row">
+            <input type="text" id="dashboard-search-input" placeholder="Search by roll number, student name, email, or room...">
+            <button type="button" id="btn-dashboard-search">Search Record</button>
+          </div>
+          <div id="dashboard-search-results" class="search-results-box" style="display: none;"></div>
+        </div>
+
+        <!-- Recent Notices Feed -->
+        <div class="card">
+          <h3>📢 Active Announcements</h3>
+          <div id="dashboard-announcements-list" class="announcements-summary-list">
+            <p style="color:#94a3b8;">Loading announcements...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. STUDENTS MANAGEMENT -->
+      <section id="students">
+        <div class="title">
+          <div><small>STUDENT MANAGEMENT</small><h2>Resident Directory</h2></div>
+          <div class="toolbar-actions">
+            <button type="button" id="btn-export-students-csv" class="btn-secondary">📥 Export CSV</button>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="row">
+            <select id="filter-students-branch">
+              <option value="All Branches">All Branches</option>
+            </select>
+            <input type="text" id="input-search-students" placeholder="Search by name, roll no, room...">
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Roll No.</th>
+                <th>Student Name</th>
+                <th>Email</th>
+                <th>Branch</th>
+                <th>Year</th>
+                <th>Room</th>
+                <th>Fee Dues</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-students-tbody">
+              <tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add Student Form -->
+        <div class="card form">
+          <h3>Create New Student Account</h3>
+          <p class="form-subtext">
+            Creates the student account in Firebase Authentication. Automatically links the UID to <code>students/{uid}</code> under <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. Creating a student will never displace your admin session. Passwords are never saved in Firestore.
+          </p>
+          <form id="form-add-student">
+            <div class="row">
+              <label>Roll Number (Identification)
+                <input type="text" id="new-student-roll" placeholder="e.g. 23CSE045" required>
+              </label>
+              <label>Account Password
+                <input type="password" id="new-student-password" placeholder="Min 6 characters" required minlength="6">
+              </label>
+            </div>
+            <div class="row">
+              <label>Academic Branch
+                <select id="new-student-branch">
+                  <option value="CSE">Computer Science & Engineering (CSE)</option>
+                </select>
+              </label>
+              <label>Academic Year
+                <select id="new-student-year">
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year" selected>3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                </select>
+              </label>
+              <label>Month of Joining
+                <input type="month" id="new-student-joining-month" required>
+              </label>
+            </div>
+            <button type="submit" id="btn-submit-add-student" class="wide">Create Student Account</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 3. BRANCHES CONFIGURATION -->
+      <section id="branches">
+        <div class="title"><div><small>CONFIGURATION</small><h2>Academic Branches</h2></div></div>
+        <div class="card form">
+          <h3>Add New Branch</h3>
+          <form id="form-add-branch">
+            <div class="row">
+              <label>Branch Code<input type="text" id="new-branch-code" placeholder="e.g. CSE, ECE, ME" required></label>
+              <label>Branch Name<input type="text" id="new-branch-name" placeholder="e.g. Computer Science & Engineering" required></label>
+            </div>
+            <button type="submit" id="btn-submit-branch">Save Branch</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Active Branches in Hostel</h3>
+          <div id="branches-chips-container" class="chips">
+            <span style="color:#94a3b8;">Loading branches...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ROOMS MANAGEMENT -->
+      <section id="rooms">
+        <div class="title"><div><small>ROOM MANAGEMENT</small><h2>Rooms & Occupancy</h2></div></div>
+        <div class="stats three">
+          <div><small>Total Rooms</small><b id="rooms-stat-total">0</b></div>
+          <div><small>Occupied Rooms</small><b id="rooms-stat-occupied">0</b></div>
+          <div><small>Available Rooms</small><b id="rooms-stat-unoccupied">0</b></div>
+        </div>
+
+        <div class="card form">
+          <h3>Add New Hostel Room</h3>
+          <form id="form-add-room">
+            <div class="row">
+              <label>Room Number<input type="text" id="new-room-no" placeholder="e.g. 101, 204" required></label>
+              <label>Capacity (Beds)<input type="number" id="new-room-capacity" min="1" max="10" value="4" required></label>
+            </div>
+            <div class="row">
+              <label>Floor<input type="text" id="new-room-floor" placeholder="e.g. 1, 2, Ground Floor" value="1"></label>
+              <label>Branch Preference
+                <select id="new-room-branch-pref">
+                  <option value="All">All Branches (General)</option>
+                </select>
+              </label>
+            </div>
+            <button type="submit" id="btn-submit-room">Create Room</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Registered Hostel Rooms</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Room No</th>
+                <th>Floor</th>
+                <th>Capacity</th>
+                <th>Occupancy Progress</th>
+                <th>Branch Pref</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="rooms-table-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Loading rooms...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 5. ALLOTMENT — PREMIUM WORKSPACE REDESIGN -->
+      <section id="allotment">
+
+        <!-- Page Header -->
+        <div class="allot-page-header">
+          <div class="allot-title-group">
+            <small>ROOM ALLOCATION</small>
+            <h2>Allotment</h2>
+            <p class="allot-subtitle">Assign students to available rooms and manage hostel allocation</p>
+          </div>
+          <div class="allot-hostel-badge">
+            <span class="allot-hostel-icon">🏠</span>
+            <div>
+              <small>Current Hostel</small>
+              <strong id="allot-hostel-name">Loading...</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two-column Workspace -->
+        <div class="allot-workspace">
+
+          <!-- LEFT: Student Selection Panel -->
+          <div class="allot-panel">
+            <div class="allot-panel-header">
+              <div class="allot-panel-title-row">
+                <h3>👤 Student Selection</h3>
+                <span class="allot-count-badge" id="allot-selected-student-count" style="display:none;">0 selected</span>
+              </div>
+              <button type="button" id="allot-select-all-visible" class="btn-allot-text">Select All</button>
+            </div>
+
+            <!-- Search -->
+            <div class="allot-search-bar">
+              <span class="allot-search-icon">🔍</span>
+              <input type="text" id="allot-student-search" placeholder="Search by roll number or name..." />
+            </div>
+
+            <!-- Branch filter -->
+            <div class="allot-filter-bar">
+              <select id="allot-branch-filter">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+
+            <!-- Quick branch chips -->
+            <div class="allot-quick-select-label">QUICK SELECT BY BRANCH</div>
+            <div class="allot-quick-branches" id="allot-quick-branches">
+              <span style="font-size:12px; color:var(--text-muted);">Loading branches...</span>
+            </div>
+
+            <!-- Student list -->
+            <div class="allot-student-list" id="allot-student-list">
+              <!-- Skeleton -->
+              <div class="allot-skeleton-row"></div>
+              <div class="allot-skeleton-row"></div>
+              <div class="allot-skeleton-row"></div>
+              <div class="allot-skeleton-row"></div>
+              <div class="allot-skeleton-row"></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Room Selection Panel -->
+          <div class="allot-panel">
+            <div class="allot-panel-header">
+              <div class="allot-panel-title-row">
+                <h3>🏠 Room Selection</h3>
+                <span class="allot-count-badge" id="allot-selected-room-count" style="display:none;">0 selected</span>
+              </div>
+            </div>
+
+            <!-- Search -->
+            <div class="allot-search-bar">
+              <span class="allot-search-icon">🔍</span>
+              <input type="text" id="allot-room-search" placeholder="Search room number..." />
+            </div>
+
+            <!-- Floor filter -->
+            <div class="allot-filter-bar">
+              <select id="allot-floor-filter">
+                <option value="">All Floors</option>
+              </select>
+            </div>
+
+            <!-- Room cards grid -->
+            <div class="allot-room-grid" id="allot-room-grid">
+              <!-- Skeleton -->
+              <div class="allot-skeleton-card"></div>
+              <div class="allot-skeleton-card"></div>
+              <div class="allot-skeleton-card"></div>
+              <div class="allot-skeleton-card"></div>
+            </div>
+          </div>
+
+        </div><!-- end .allot-workspace -->
+
+        <!-- Allocation Summary Bar -->
+        <div class="allot-summary-bar">
+          <div class="allot-summary-title">ALLOCATION SUMMARY</div>
+          <div class="allot-summary-stats">
+            <div class="allot-stat-box">
+              <span id="allot-stat-students">0</span>
+              <label>Students Selected</label>
+            </div>
+            <div class="allot-stat-divider"></div>
+            <div class="allot-stat-box allot-stat-beds-box">
+              <span id="allot-stat-beds">0</span>
+              <label>Available Beds</label>
+            </div>
+            <div class="allot-stat-divider"></div>
+            <div class="allot-stat-box">
+              <span id="allot-stat-rooms">0</span>
+              <label>Rooms Selected</label>
+            </div>
+          </div>
+          <div class="allot-summary-cta">
+            <div class="allot-capacity-status" id="allot-capacity-status"></div>
+            <button type="button" id="btn-allot-confirm-open" class="btn-allot-primary" disabled>
+              Allot Selected Students
+            </button>
+          </div>
+        </div>
+
+        <!-- Reallocation Zone -->
+        <div class="allot-reallocation-zone">
+          <div class="allot-reallocation-info">
+            <h4>⚙️ Reallocation</h4>
+            <p>Reorganize existing student allocations across available rooms. This will clear and regenerate all current room assignments.</p>
+          </div>
+          <button type="button" id="btn-reallocate-open" class="btn-reallocate">
+            Reallocate All
+          </button>
+        </div>
+
+        <!-- Allotment Confirmation Modal -->
+        <div class="allot-modal-overlay" id="allot-confirm-modal" style="display:none;" role="dialog" aria-modal="true">
+          <div class="allot-modal-card">
+            <div class="allot-modal-header">
+              <h3>Confirm Allocation</h3>
+              <button type="button" class="allot-modal-close" id="btn-allot-modal-close" aria-label="Close">×</button>
+            </div>
+            <div class="allot-modal-body">
+              <div class="allot-modal-stat-row">
+                <div class="allot-modal-stat">
+                  <span id="allot-modal-students">0</span>
+                  <label>Students</label>
+                </div>
+                <div class="allot-modal-stat">
+                  <span id="allot-modal-beds">0</span>
+                  <label>Beds Available</label>
+                </div>
+              </div>
+              <div class="allot-modal-room-names" id="allot-modal-rooms">—</div>
+              <p class="allot-modal-note">Students will be assigned to available beds in the selected rooms. This operation uses a database transaction and cannot be partially completed.</p>
+            </div>
+            <div class="allot-modal-footer">
+              <button type="button" class="btn-modal-cancel" id="btn-allot-modal-cancel">Cancel</button>
+              <button type="button" class="btn-modal-confirm" id="btn-allot-confirm">Confirm Allocation</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reallocation Confirmation Modal -->
+        <div class="allot-modal-overlay" id="reallot-confirm-modal" style="display:none;" role="dialog" aria-modal="true">
+          <div class="allot-modal-card">
+            <div class="allot-modal-header allot-modal-header-danger">
+              <h3>⚠️ Reallocate All Students?</h3>
+              <button type="button" class="allot-modal-close" id="btn-reallot-modal-close" aria-label="Close">×</button>
+            </div>
+            <div class="allot-modal-body">
+              <p>This will reorganize <strong>all existing hostel allocations</strong> and may change current room assignments for every student in this hostel.</p>
+              <p class="allot-modal-danger-text">Existing room assignments will be cleared first. This action cannot be undone.</p>
+            </div>
+            <div class="allot-modal-footer">
+              <button type="button" class="btn-modal-cancel" id="btn-reallot-modal-cancel">Cancel</button>
+              <button type="button" class="btn-modal-confirm btn-modal-danger" id="btn-reallocate-confirm">Continue — Reallocate</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- 6. MEAL ATTENDANCE -->
+      <section id="attendance">
+        <div class="title">
+          <div><small>DINING OPERATIONS</small><h2>Meal Attendance Register</h2></div>
+          <div class="toolbar-actions" style="display:flex; gap:10px;">
+            <button type="button" id="btn-mode-mark-attendance" class="btn-primary" style="font-size:12px; padding:6px 12px; background:var(--primary);">Mark Attendance</button>
+            <button type="button" id="btn-mode-view-attendance" class="btn-secondary" style="font-size:12px; padding:6px 12px;">VIEW PREVIOUS ATTENDANCE</button>
+          </div>
+        </div>
+
+        <!-- Mark Attendance Card -->
+        <div id="attendance-mark-card" class="card">
+          <div id="attendance-finalized-badge" style="display:none; margin-bottom:14px; padding:10px 14px; background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; border-radius:8px; font-weight:600; font-size:13px;">
+            🔒 Month Finalized: Attendance records for this month are locked and published.
+          </div>
+          <div class="row">
+            <label>Date
+              <input type="date" id="attendance-date">
+            </label>
+            <label>Meal Session / Item
+              <select id="attendance-meal">
+                <option value="Breakfast">🌅 Breakfast</option>
+                <option value="Lunch" selected>☀️ Lunch</option>
+                <option value="Dinner">🌙 Dinner</option>
+              </select>
+            </label>
+            <button type="button" id="btn-load-attendance">Load Roster Sheet</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">Mark</th>
+                <th>Roll No.</th>
+                <th>Student Name</th>
+                <th>Branch</th>
+                <th>Room</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-table-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8;">Click 'Load Roster Sheet' to view resident roster.</td></tr>
+            </tbody>
+          </table>
+          <button type="button" id="btn-save-attendance" class="wide" style="margin-top: 14px;">Save Daily Attendance</button>
+        </div>
+
+        <!-- View Previous Attendance Card (Initially Hidden) -->
+        <div id="attendance-history-card" class="card" style="display: none; border-left: 4px solid var(--primary);">
+          <h3>🗓️ View Previously Recorded Attendance</h3>
+          <p class="form-subtext">Fetch historical attendance records for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. Historical records are strictly read-only.</p>
+          <div class="row" style="margin-bottom: 14px; align-items: flex-end;">
+            <label>Date
+              <input type="date" id="history-attendance-date">
+            </label>
+            <label>Meal Session / Item
+              <select id="history-attendance-meal">
+                <option value="Breakfast">🌅 Breakfast</option>
+                <option value="Lunch">☀️ Lunch</option>
+                <option value="Dinner">🌙 Dinner</option>
+              </select>
+            </label>
+            <button type="button" id="btn-fetch-history-attendance">Fetch Attendance Record</button>
+          </div>
+          <div id="history-summary-header" style="display:none; font-size:13px; font-weight:700; margin-bottom:12px; color:var(--primary); background:#eef2ff; padding:8px 12px; border-radius:6px;"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Roll No.</th>
+                <th>Student Name</th>
+                <th>Branch</th>
+                <th>Room</th>
+                <th>Attendance Status</th>
+                <th>Meal</th>
+                <th>Meal Cost (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="history-attendance-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Select Date & Meal Session and click 'Fetch Attendance Record'.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Publish / Finalize Monthly Attendance Card -->
+        <div id="attendance-finalize-card" class="card" style="margin-top: 24px; border-left: 4px solid #10b981;">
+          <h3>🗓️ Publish & Finalize Monthly Attendance</h3>
+          <p class="form-subtext">Review daily attendance and finalize the month to calculate immutable student fees for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>.</p>
+          <div class="row" style="align-items: flex-end;">
+            <label style="flex:1;">Select Month & Year
+              <select id="finalize-month-select">
+                <option value="2026_01">January 2026</option>
+                <option value="2026_02">February 2026</option>
+                <option value="2026_03">March 2026</option>
+                <option value="2026_04">April 2026</option>
+                <option value="2026_05">May 2026</option>
+                <option value="2026_06">June 2026</option>
+                <option value="2026_07">July 2026</option>
+                <option value="2026_08">August 2026</option>
+                <option value="2026_09" selected>September 2026</option>
+                <option value="2026_10">October 2026</option>
+                <option value="2026_11">November 2026</option>
+                <option value="2026_12">December 2026</option>
+              </select>
+            </label>
+            <button type="button" id="btn-trigger-finalize-month" class="btn-primary" style="background:#059669; padding: 10px 18px;">PUBLISH / FINALIZE MONTH</button>
+          </div>
+          <div id="finalize-status-info" style="margin-top: 12px; font-size: 13px; font-weight: 600; color: #047857;"></div>
+        </div>
+      </section>
+
+      <!-- 7. COMPLAINTS (ISSUE MANAGEMENT) -->
+      <section id="complaints">
+        <div class="title"><div><small>ISSUE MANAGEMENT</small><h2>Resident Complaints Desk</h2></div></div>
+        
+        <div class="card form">
+          <h3>Log New Resident Complaint</h3>
+          <form id="form-admin-new-complaint">
+            <div class="row">
+              <label>Student Name<input type="text" id="complaint-student-name" placeholder="Student name" required></label>
+              <label>Room Number<input type="text" id="complaint-room-no" placeholder="Room no" required></label>
+            </div>
+            <label>Category
+              <select id="complaint-category-select">
+                <option value="Plumbing">Plumbing & Water</option>
+                <option value="Electricity">Electricity / Light / Fan</option>
+                <option value="Wi-Fi">Wi-Fi & Internet</option>
+                <option value="Cleaning">Room Cleaning / Housekeeping</option>
+                <option value="Mess">Mess Food & Hygiene</option>
+                <option value="Other">Other Issues</option>
+              </select>
+            </label>
+            <label>Problem Description
+              <textarea id="complaint-desc" rows="3" placeholder="Provide detailed issue description..." required></textarea>
+            </label>
+            <button type="submit" id="btn-submit-complaint">Register Complaint</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Registered Complaints & Action Tracker</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Resident</th>
+                <th>Room</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="complaints-table-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Loading complaints...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 8. FEES ADMINISTRATION -->
+      <section id="fees">
+        <div class="title"><div><small>FINANCIAL MANAGEMENT</small><h2>Fees Administration</h2></div></div>
+        <div class="card form">
+          <h3>⚙️ Configure Month-Specific Fee & Meal Pricing</h3>
+          <p class="form-subtext">Configure monthly room rent and session meal prices for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. Finalized months remain locked and protected.</p>
+          <form id="form-fee-settings">
+            <div class="row">
+              <label style="flex:1;">Select Month & Year
+                <select id="fee-month-select" required>
+                  <option value="2026_01">January 2026</option>
+                  <option value="2026_02">February 2026</option>
+                  <option value="2026_03">March 2026</option>
+                  <option value="2026_04">April 2026</option>
+                  <option value="2026_05">May 2026</option>
+                  <option value="2026_06">June 2026</option>
+                  <option value="2026_07">July 2026</option>
+                  <option value="2026_08">August 2026</option>
+                  <option value="2026_09" selected>September 2026</option>
+                  <option value="2026_10">October 2026</option>
+                  <option value="2026_11">November 2026</option>
+                  <option value="2026_12">December 2026</option>
+                </select>
+              </label>
+              <label style="flex:1;">Monthly Room Rent (₹)
+                <input type="number" id="fee-monthly-rent" value="2000" min="0" required>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px;">
+              <label>Breakfast Price (₹)
+                <input type="number" id="meal-price-breakfast" value="30" min="0" required>
+              </label>
+              <label>Lunch Price (₹)
+                <input type="number" id="meal-price-lunch" value="50" min="0" required>
+              </label>
+              <label>Dinner Price (₹)
+                <input type="number" id="meal-price-dinner" value="45" min="0" required>
+              </label>
+            </div>
+
+            <!-- Custom Meal Items -->
+            <div style="margin-top: 16px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+              <h4 style="margin-bottom: 8px; font-size: 13px; color: var(--primary);">➕ Add Custom Meal / Snack Item</h4>
+              <div class="row" style="align-items: flex-end;">
+                <label style="flex:2;">Item Name
+                  <input type="text" id="input-custom-meal-name" placeholder="e.g. Evening Snacks, Tea, Milk">
+                </label>
+                <label style="flex:1;">Price (₹)
+                  <input type="number" id="input-custom-meal-price" placeholder="e.g. 20" min="0">
+                </label>
+                <button type="button" id="btn-add-custom-item" style="padding: 10px 14px; font-size: 12px; margin-bottom: 0;">+ Add Item</button>
+              </div>
+
+              <div id="custom-meals-chips-container" class="chips" style="margin-top: 12px;">
+                <!-- Custom item chips -->
+              </div>
+            </div>
+
+            <button type="submit" id="btn-save-fee-settings" class="wide" style="margin-top: 18px;">SAVE / PUBLISH PRICES</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 9. ANNOUNCEMENTS -->
+      <section id="announcements">
+        <div class="title"><div><small>COMMUNICATION</small><h2>Announcements & Notice Board</h2></div></div>
+        <div class="card form">
+          <h3>Publish Notice</h3>
+          <form id="form-new-announcement">
+            <label>Notice Title
+              <input type="text" id="announcement-title" placeholder="e.g. Water Supply Maintenance" required>
+            </label>
+            <label>Target Audience
+              <select id="announcement-audience">
+                <option value="All Students">All Students</option>
+                <option value="1st Year">1st Year Only</option>
+                <option value="Final Year">Final Year Only</option>
+              </select>
+            </label>
+            <label>Notice Content
+              <textarea id="announcement-content" rows="3" placeholder="Provide complete notice information..." required></textarea>
+            </label>
+            <button type="submit" id="btn-submit-announcement">Publish Notice</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Published Notices</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Audience</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="announcements-table-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8;">Loading notices...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 10. MESS MANAGEMENT -->
+      <section id="mess">
+        <div class="title"><div><small>MESS MANAGEMENT</small><h2>Mess Timetable & Menu</h2></div></div>
+        <div class="card form">
+          <h3>Update Timings & Weekly Menu</h3>
+          <form id="form-mess-timetable">
+            <div class="row">
+              <label>Breakfast Timing
+                <input type="text" id="mess-timing-breakfast" value="07:30 AM – 09:00 AM" required>
+              </label>
+              <label>Lunch Timing
+                <input type="text" id="mess-timing-lunch" value="12:30 PM – 02:00 PM" required>
+              </label>
+              <label>Dinner Timing
+                <input type="text" id="mess-timing-dinner" value="07:30 PM – 09:00 PM" required>
+              </label>
+            </div>
+            <label>Today's Featured Menu Notice
+              <textarea id="mess-menu-today" rows="2" placeholder="Menu details..."></textarea>
+            </label>
+
+            <h4 style="margin: 16px 0 8px; color: var(--primary);">🗓️ 7-Day Weekly Menu Timetable</h4>
+            <div style="overflow-x: auto;">
+              <table style="font-size: 13px;">
+                <thead>
+                  <tr>
+                    <th style="width: 100px;">Day</th>
+                    <th>🌅 Breakfast</th>
+                    <th>☀️ Lunch</th>
+                    <th>🌙 Dinner</th>
+                  </tr>
+                </thead>
+                <tbody id="mess-weekly-timetable-tbody">
+                  <!-- Mon-Sun rows populated in app.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <button type="submit" id="btn-save-mess" class="wide" style="margin-top: 16px;">Save & Publish Timetable</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Current Published Schedule</h3>
+          <div id="mess-published-schedule" class="timeline">
+            <div>🌅 <b>Breakfast</b><span id="display-mess-bf">07:30 AM – 09:00 AM</span></div>
+            <div>☀️ <b>Lunch</b><span id="display-mess-lu">12:30 PM – 02:00 PM</span></div>
+            <div>🌙 <b>Dinner</b><span id="display-mess-di">07:30 PM – 09:00 PM</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. PAYMENTS & UPI -->
+      <section id="payments">
+        <div class="title"><div><small>PAYMENT COLLECTION</small><h2>Fee Payments & UPI QR</h2></div></div>
+
+        <!-- Payment Summary Stat Cards -->
+        <div class="stats pay-stats four" style="margin-bottom: 24px;">
+          <div class="pay-stat-card">
+            <div class="pay-stat-icon" style="background:#eff6ff;">💰</div>
+            <small>Total Collected</small>
+            <b id="pay-stat-total-collected">₹0</b>
+          </div>
+          <div class="pay-stat-card">
+            <div class="pay-stat-icon" style="background:#fef3c7;">⏳</div>
+            <small>Pending Verification</small>
+            <b id="pay-stat-pending" style="color:#d97706;">0</b>
+          </div>
+          <div class="pay-stat-card">
+            <div class="pay-stat-icon" style="background:#f0fdf4;">✅</div>
+            <small>Verified Payments</small>
+            <b id="pay-stat-verified" style="color:#16a34a;">0</b>
+          </div>
+          <div class="pay-stat-card">
+            <div class="pay-stat-icon" style="background:#fef2f2;">❌</div>
+            <small>Rejected</small>
+            <b id="pay-stat-rejected" style="color:#dc2626;">0</b>
+          </div>
+        </div>
+
+        <!-- UPI QR + Record Payment -->
+        <div class="payment-grid" style="margin-bottom: 24px;">
+          <!-- QR Card -->
+          <div class="card pay-qr-card">
+            <h3>🔒 Hostel Fee QR & UPI</h3>
+            <div class="qr-frame" id="upi-qr-display">
+              <span id="qr-placeholder-text" class="qr-placeholder-msg">No QR Uploaded Yet</span>
+              <img id="qr-image-element" style="display:none; max-width:100%; max-height:100%; object-fit:contain; border-radius:6px;" alt="UPI QR Code">
+            </div>
+            <div class="upi-id-display">
+              <small>Hostel UPI ID</small>
+              <b id="payment-upi-id-text">ellora.hostel@upi</b>
+            </div>
+            <form id="form-upi-update">
+              <label style="font-size:12px; margin-bottom:6px; display:block; font-weight:600; color:#334155;">Upload Custom QR Image
+                <input type="file" id="input-qr-file" accept="image/*" style="font-size:11px; margin-top:4px; width:100%;">
+              </label>
+              <label style="font-size:12px; display:block; font-weight:600; color:#334155; margin-top:8px;">Update UPI ID
+                <input type="text" id="input-new-upi-id" placeholder="e.g. hostel@upi" style="font-size:12px; margin-top:4px;">
+              </label>
+              <button type="submit" id="btn-save-upi-qr" style="font-size:12px; padding:8px 14px; margin-top:10px; width:100%;">Save Payment Settings</button>
+            </form>
+          </div>
+
+          <!-- Record Manual Payment Card -->
+          <div class="card">
+            <h3>📋 Record Offline / Manual Payment</h3>
+            <p class="form-subtext">Use this to log a cash or bank-transfer payment directly. These are <strong>pre-verified</strong> and immediately deducted from the student's balance.</p>
+            <form id="form-record-payment">
+              <label style="display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Student
+                <select id="record-payment-student-select" required style="margin-top:6px;">
+                  <option value="">Select student...</option>
+                </select>
+              </label>
+              <div class="row">
+                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Amount (₹)
+                  <input type="number" id="record-payment-amount" min="1" placeholder="e.g. 5000" required style="margin-top:6px;">
+                </label>
+                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Transaction ID / UTR
+                  <input type="text" id="record-payment-utr" placeholder="UPI12345678" required style="margin-top:6px;">
+                </label>
+              </div>
+              <div class="row">
+                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Billing Month
+                  <input type="month" id="record-payment-billing-month" style="margin-top:6px;">
+                </label>
+                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Notes (Optional)
+                  <input type="text" id="record-payment-notes" placeholder="e.g. Cash payment for Oct 2026" style="margin-top:6px;">
+                </label>
+              </div>
+              <button type="submit" id="btn-submit-payment" style="margin-top:4px; width:100%;">✅ Record & Verify Payment</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Transaction Ledger with Filters -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <h3 style="margin:0;">📜 Payment Transaction Ledger</h3>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div class="pay-filter-tabs" id="pay-status-tabs">
+                <button type="button" class="pay-tab active" data-status="all">All</button>
+                <button type="button" class="pay-tab" data-status="Pending Verification">⏳ Pending</button>
+                <button type="button" class="pay-tab" data-status="Verified">✅ Verified</button>
+                <button type="button" class="pay-tab" data-status="Rejected">❌ Rejected</button>
+              </div>
+              <input type="month" id="pay-ledger-month-filter" title="Filter by billing month" style="padding:6px 10px; font-size:12px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Student</th>
+                  <th>Roll No</th>
+                  <th>Amount</th>
+                  <th>UTR / Ref No.</th>
+                  <th>Month</th>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="payments-table-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">Loading transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. SETTINGS & SYSTEM CONTROL -->
+      <section id="settings">
+        <div class="title"><div><small>SYSTEM CONTROL</small><h2>Hostel Settings & Tools</h2></div></div>
+        
+        <!-- One-Click Database Seeder for Quick Setup -->
+        <div class="card" style="background:#f0fdf4;border-color:#bbf7d0;">
+          <h3 style="color:#166534;">🚀 Initial Database Setup & Seed Tool</h3>
+          <p style="font-size:13px;color:#15803d;margin-bottom:14px;">
+            If this hostel is newly created and empty, click this button to seed initial branches (CSE, ECE, EEE, etc.), sample rooms, and announcements directly into Cloud Firestore for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>.
+          </p>
+          <button type="button" id="btn-seed-data" style="background:#16a34a;">Seed Initial Sample Data in Firestore</button>
+        </div>
+
+        <!-- Hostel Profile Form -->
+        <div class="card form">
+          <h3>Hostel Profile & Details</h3>
+          <form id="form-hostel-profile">
+            <div class="row">
+              <label>Hostel Name
+                <input type="text" id="settings-hostel-name" required>
+              </label>
+              <label>Hostel Code
+                <input type="text" id="settings-hostel-code" required>
+              </label>
+            </div>
+            <div class="row">
+              <label>Warden Name
+                <input type="text" id="settings-warden-name" placeholder="Chief Warden">
+              </label>
+              <label>Warden Phone
+                <input type="text" id="settings-warden-phone" placeholder="+91 98765 43210">
+              </label>
+            </div>
+            <button type="submit" id="btn-save-hostel-profile">Update Hostel Profile</button>
+          </form>
+        </div>
+
+        <!-- Admin Password Update -->
+        <div class="card form">
+          <h3>Update Admin Password (Firebase Auth)</h3>
+          <p class="form-subtext">Updates your single Firebase Authentication password across the platform.</p>
+          <form id="form-change-password-admin">
+            <label>New Password
+              <input type="password" id="admin-new-password" placeholder="Min 6 characters" required minlength="6">
+            </label>
+            <button type="submit">Update Password</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 13. LOGOUT -->
+      <section id="logout">
+        <div class="logout">
+          <h2>Sign Out of System</h2>
+          <p>Terminates the active Firebase Authentication session securely.</p>
+          <button class="btn-logout-trigger btn-primary">Confirm Sign Out</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- STUDENT PORTAL INTERFACE -->
+  <div id="view-student" class="portal-layout" style="display: none; contain: layout style;">
+    <aside class="sidebar">
+      <div class="brand" style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 20px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="brand-icon">🎓</div>
+          <div class="brand-text">Student Portal</div>
+        </div>
+        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">◀</button>
+      </div>
+      <ul class="nav">
+        <li><a href="#student-profile" class="nav-item active"><span class="icon">👤</span><span>My Profile</span></a></li>
+        <li><a href="#student-complaints" class="nav-item"><span class="icon">🛠️</span><span>Complaints</span></a></li>
+        <li><a href="#student-payments" class="nav-item"><span class="icon">💳</span><span>Payments</span></a></li>
+        <li><a href="#student-mess" class="nav-item"><span class="icon">🍱</span><span>Mess Timetable</span></a></li>
+        <li><a href="#student-announcements" class="nav-item"><span class="icon">📢</span><span>Announcements</span></a></li>
+        <li style="margin-top: auto;"><a href="#student-logout" class="nav-item btn-student-logout-trigger"><span class="icon">🚪</span><span>Logout</span></a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div style="display:flex; align-items:center; gap: 12px;">
+          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; cursor:pointer;">☰ Menu</button>
+          <span style="font-size: 20px;">🏢</span>
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; display: block;">Hostel Campus</span>
+            <strong id="student-topbar-hostel-name" style="font-size: 15px; color: var(--primary);">Loading Hostel...</strong>
+          </div>
+        </div>
+        <div class="user-profile">
+          <div class="avatar" id="student-avatar-initials">ST</div>
+          <div class="user-info">
+            <strong id="student-topbar-name">Student Account</strong>
+            <small id="student-topbar-roll">Roll No: --</small>
+          </div>
+        </div>
+      </header>
+
+      <!-- 1. MY PROFILE -->
+      <section id="student-profile" class="active">
+        <div class="title"><div><small>RESIDENT CREDENTIALS</small><h2>My Profile</h2></div></div>
+        
+        <div class="row" style="gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+          <!-- Personal Details Card -->
+          <div class="card" style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+              <div class="avatar" id="profile-big-avatar" style="width: 56px; height: 56px; font-size: 22px;">ST</div>
+              <div>
+                <h3 id="profile-display-name" style="margin:0;">Student Name</h3>
+                <p id="profile-display-roll" style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Roll No: --</p>
+              </div>
+            </div>
+            <h4 style="margin-bottom: 10px; color: var(--primary);">📌 Personal Details</h4>
+            <table style="width: 100%;">
+              <tr><th style="width: 40%;">Roll Number</th><td id="prof-roll">--</td></tr>
+              <tr><th>Branch</th><td id="prof-branch">--</td></tr>
+              <tr><th>Year of Study</th><td id="prof-year">--</td></tr>
+              <tr><th>Month of Joining</th><td id="prof-joining-month">--</td></tr>
+              <tr><th>Account Status</th><td><span id="prof-status" class="badge badge-success">Active</span></td></tr>
+              <tr><th>Role</th><td><span class="badge badge-info">Student</span></td></tr>
+            </table>
+          </div>
+
+          <!-- Hostel & Room Details Card -->
+          <div class="card" style="flex: 1;">
+            <h3 style="margin-bottom: 12px;">🏠 Hostel & Room Accommodation</h3>
+            <table style="width: 100%;">
+              <tr><th style="width: 40%;">Hostel Campus</th><td id="prof-hostel">--</td></tr>
+              <tr><th>Room Number</th><td id="prof-room-no"><span class="badge badge-warning">Not Allotted Yet</span></td></tr>
+              <tr><th>Floor</th><td id="prof-floor">--</td></tr>
+              <tr><th>Bed Number</th><td id="prof-bed">--</td></tr>
+              <tr><th>Allotment Status</th><td id="prof-allotment-status"><span class="badge badge-warning">Pending</span></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Roommates Card -->
+        <div class="card">
+          <h3>👥 Roommates</h3>
+          <p class="form-subtext">Students currently allotted to the same room.</p>
+          <div id="prof-roommates-container" style="margin-top: 10px;">
+            <p style="color: #94a3b8; font-size: 14px;">Loading roommate information...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. COMPLAINTS -->
+      <section id="student-complaints">
+        <div class="title"><div><small>SUPPORT DESK</small><h2>My Complaints & Tickets</h2></div></div>
+        
+        <div class="card form" style="margin-bottom:20px;">
+          <h3>➕ Submit New Complaint</h3>
+          <form id="form-student-new-complaint">
+            <div class="row">
+              <label>Category
+                <select id="student-complaint-category">
+                  <option value="Plumbing">Plumbing & Water Supply</option>
+                  <option value="Electricity">Electricity & Lighting</option>
+                  <option value="Wi-Fi">Wi-Fi & Internet</option>
+                  <option value="Cleaning">Housekeeping & Cleaning</option>
+                  <option value="Mess">Mess Food Quality</option>
+                  <option value="Other">Other Issues</option>
+                </select>
+              </label>
+            </div>
+            <label>Description of Issue
+              <textarea id="student-complaint-desc" rows="3" placeholder="Provide detailed explanation of the issue..." required></textarea>
+            </label>
+            <button type="submit" style="margin-top:10px;">Submit Complaint Ticket</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>📋 My Submitted Tickets</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Date Logged</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Resolution / Admin Response</th>
+              </tr>
+            </thead>
+            <tbody id="student-complaints-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">Loading complaint tickets...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. PAYMENTS -->
+      <section id="student-payments">
+        <div class="title"><div><small>ACCOUNT & PAYMENTS</small><h2>Fees & Payments</h2></div></div>
+
+        <!-- Fee Summary Card -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3>📊 Fee Summary & Dues</h3>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="margin: 0; font-size: 13px; font-weight: 600;">Billing Month:</label>
+              <input type="month" id="student-fee-month-picker" style="padding: 4px 8px; font-size: 13px;">
+              <button type="button" id="btn-calc-student-fee" style="padding: 6px 12px; font-size: 12px;">Recalculate</button>
+            </div>
+          </div>
+
+          <div class="metrics" style="margin-bottom: 16px;">
+            <div class="metric">
+              <small>Total Monthly Fee</small>
+              <strong id="student-fee-total">₹0</strong>
+            </div>
+            <div class="metric">
+              <small>Amount Paid</small>
+              <strong id="student-fee-paid" style="color:#10b981;">₹0</strong>
+            </div>
+            <div class="metric">
+              <small>Pending Due</small>
+              <strong id="student-fee-pending" style="color:#ef4444;">₹0</strong>
+            </div>
+            <div class="metric">
+              <small>Status</small>
+              <strong id="student-fee-status-badge"><span class="badge badge-success">Paid</span></strong>
+            </div>
+          </div>
+
+          <div id="student-fee-finalized-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; border-radius:8px; font-weight:600; font-size:13px;"></div>
+          <div class="card" style="background:#f8fafc; border:1px solid #e2e8f0; margin-bottom: 0;">
+            <h4 style="margin-bottom:10px; color:var(--primary);">Itemized Breakdown for <span id="fee-statement-period">Current Month</span></h4>
+            <table style="margin-bottom:0;">
+              <tbody>
+                <tr><td>Monthly Room Rent</td><td style="text-align:right;" id="fee-breakup-rent">₹0</td></tr>
+                <tr><td>Breakfast Charges (<span id="fee-cnt-bf">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-bf">₹0</td></tr>
+                <tr><td>Lunch Charges (<span id="fee-cnt-lunch">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-lunch">₹0</td></tr>
+                <tr><td>Dinner Charges (<span id="fee-cnt-dinner">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-dinner">₹0</td></tr>
+                <tr><td>Custom Meals & Snacks (<span id="fee-cnt-custom">0</span> items)</td><td style="text-align:right;" id="fee-breakup-custom">₹0</td></tr>
+                <tr style="font-weight:700; border-top:2px solid #cbd5e1;"><td>Total Monthly Charges</td><td style="text-align:right; color:var(--primary);" id="fee-breakup-total">₹0</td></tr>
+                <tr style="font-weight:600; color:#10b981;"><td>Verified Payments</td><td style="text-align:right;" id="fee-breakup-paid">₹0</td></tr>
+                <tr style="font-weight:700; color:#ef4444;"><td>Net Payable Balance</td><td style="text-align:right;" id="fee-breakup-net">₹0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+          <!-- Hostel QR / UPI Card - Premium -->
+          <div class="row" style="gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+            <div class="card stu-qr-card" style="flex:1;">
+              <h3>💳 Hostel Payment Gateway</h3>
+              <p class="form-subtext">Scan the QR code or use the UPI ID to transfer your fee amount.</p>
+              <div class="stu-qr-frame">
+                <img id="student-payment-qr-img" src="" alt="Hostel QR" style="max-width:200px; max-height:200px; border-radius:10px; display:none; margin:0 auto 12px;">
+                <div id="student-payment-qr-placeholder" class="stu-qr-placeholder">📱 QR code not configured yet.<br><small>Contact your warden to set up UPI QR.</small></div>
+              </div>
+              <div class="stu-upi-display">
+                <small>Official Hostel UPI ID</small>
+                <span id="student-payment-upi-id">Not Configured</span>
+              </div>
+              <div class="stu-scan-instructions">
+                <span>📱 Open any UPI app</span>
+                <span>→</span>
+                <span>Scan / Enter UPI</span>
+                <span>→</span>
+                <span>Pay & submit UTR below</span>
+              </div>
+            </div>
+
+            <!-- Submit UTR / Payment Reference Form -->
+            <div class="card" style="flex:1;">
+              <h3>📝 Submit Payment Reference (UTR)</h3>
+              <p class="form-subtext">After making the payment, submit your UTR/transaction ID here for warden verification.</p>
+              <div id="utr-submit-success-banner" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:8px; padding:12px 14px; font-weight:600; font-size:13px; margin-bottom:14px;">
+                ✅ <strong>Payment submitted!</strong> Your transaction is under verification. Check your history below.
+              </div>
+              <form id="form-student-submit-utr">
+                <div class="row">
+                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Amount Paid (₹)
+                    <input type="number" id="student-utr-amount" placeholder="e.g. 3500" min="1" required style="margin-top:6px;">
+                  </label>
+                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Billing Month
+                    <input type="month" id="student-utr-billing-month" required style="margin-top:6px;">
+                  </label>
+                </div>
+                <label style="display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Transaction / UTR Number
+                  <input type="text" id="student-utr-number" placeholder="Enter 12-digit UTR or Reference ID" required style="margin-top:6px;">
+                </label>
+                <div class="row">
+                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Payment Date
+                    <input type="date" id="student-utr-date" required style="margin-top:6px;">
+                  </label>
+                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Remarks (Optional)
+                    <input type="text" id="student-utr-remarks" placeholder="e.g. November Fee" style="margin-top:6px;">
+                  </label>
+                </div>
+                <button type="submit" class="wide" style="margin-top:4px;">📤 Submit Transaction Details</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Payment History -->
+          <div class="card">
+            <h3>📜 My Transaction History</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount (₹)</th>
+                  <th>UTR / Ref No.</th>
+                  <th>Billing Month</th>
+                  <th>Remarks</th>
+                  <th>Status</th>
+                  <th>Admin Notes</th>
+                </tr>
+              </thead>
+              <tbody id="student-payment-history-tbody">
+                <tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Loading payment records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      <!-- 4. MESS TIMETABLE -->
+      <section id="student-mess">
+        <div class="title"><div><small>DINING & MENU</small><h2>Mess Timetable & Menu</h2></div></div>
+        
+        <div class="card" style="margin-bottom: 20px;">
+          <h3>⏰ Configured Meal Timings</h3>
+          <div class="metrics" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+            <div class="metric"><small>Breakfast Timing</small><strong id="student-timing-bf" style="font-size:16px;">--</strong></div>
+            <div class="metric"><small>Lunch Timing</small><strong id="student-timing-lunch" style="font-size:16px;">--</strong></div>
+            <div class="metric"><small>Dinner Timing</small><strong id="student-timing-dinner" style="font-size:16px;">--</strong></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📅 Weekly Timetable</h3>
+          <div id="student-weekly-menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 14px;">
+            <!-- Days list -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. ANNOUNCEMENTS -->
+      <section id="student-announcements">
+        <div class="title"><div><small>NOTICE BOARD</small><h2>Hostel Announcements</h2></div></div>
+        <div class="card">
+          <h3>📢 Circulars & Bulletins</h3>
+          <div id="student-full-announcements-list" style="margin-top: 14px;">
+            <p style="color:#94a3b8;">Loading announcements...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. LOGOUT -->
+      <section id="student-logout">
+        <div class="logout">
+          <h2>Sign Out of Student Portal</h2>
+          <p>Terminates your active student session securely.</p>
+          <button class="btn-student-logout-trigger btn-primary">Confirm Sign Out</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Reject Payment (Admin) -->
+  <div id="modal-reject-payment" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:480px; border-top:5px solid #dc2626;">
+      <div class="modal-header">
+        <h3 style="color:#b91c1c;">❌ Reject Payment Submission</h3>
+        <button type="button" id="btn-close-reject-modal" class="modal-close">&times;</button>
+      </div>
+      <p class="modal-desc">Provide a clear reason for rejection. The student will see this reason in their transaction history.</p>
+      <div style="margin-bottom:14px; padding:12px 14px; background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; font-size:13px; color:#991b1b;">
+        <strong>Student:</strong> <span id="reject-modal-student-name">—</span><br>
+        <strong>Amount:</strong> <span id="reject-modal-amount">—</span><br>
+        <strong>UTR:</strong> <span id="reject-modal-utr">—</span>
+      </div>
+      <label style="display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Rejection Reason <span style="color:#dc2626;">*</span>
+        <textarea id="reject-payment-reason" rows="3" placeholder="e.g. UTR number does not match our bank records. Please recheck and resubmit." style="margin-top:6px; width:100%;" required></textarea>
+      </label>
+      <input type="hidden" id="reject-payment-id">
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-reject-payment" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-reject-payment" style="background:#dc2626;">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Month Finalization -->
+  <div id="modal-confirm-finalize" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 480px; border-top: 5px solid #059669;">
+      <button type="button" id="btn-close-finalize-modal" class="modal-close">&times;</button>
+      <h3 style="color:#065f46; margin-bottom:12px;">🗓️ Confirm Monthly Finalization</h3>
+      <p id="finalize-confirm-message" style="font-size:14px; line-height:1.5; color:#334155; margin-bottom:20px;">
+        Publishing September 2026 will finalize the attendance records and calculate student fees for this month. This action should not be reversed without administrator authorization.
+      </p>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" id="btn-cancel-finalize" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-proceed-finalize" class="btn-primary" style="background:#059669;">Confirm &amp; Finalize</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Entry Point (already modulepreloaded in <head>) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

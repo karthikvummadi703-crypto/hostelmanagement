@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------
+    // IDENTITY HELPERS
+    // ------------------------------------------------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ------------------------------------------------------------
+    // ADMIN PROFILES
+    // Read: Any authenticated user (allows non-admin check without exception)
+    // Write: Authenticated admin for their own profile
+    // ------------------------------------------------------------
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == adminId;
+    }
+
+    // ------------------------------------------------------------
+    // HOSTEL METADATA
+    // ------------------------------------------------------------
+    match /hostels/{hostelId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // STUDENT PROFILES
+    // ------------------------------------------------------------
+    match /students/{studentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // ACADEMIC BRANCHES
+    // ------------------------------------------------------------
+    match /branches/{branchId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // ROOMS & ACCOMMODATION
+    // ------------------------------------------------------------
+    match /rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // ATTENDANCE RECORDS
+    // ------------------------------------------------------------
+    match /attendance/{attendanceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // COMPLAINTS & SUPPORT TICKETS
+    // ------------------------------------------------------------
+    match /complaints/{complaintId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // ANNOUNCEMENTS & BULLETINS
+    // ------------------------------------------------------------
+    match /announcements/{announcementId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // PAYMENTS & UTR RECEIPTS
+    // ------------------------------------------------------------
+    match /payments/{paymentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // MESS SCHEDULES & PRICING
+    // ------------------------------------------------------------
+    match /mess/{messId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // MONTHLY FEE CONFIGURATIONS
+    // ------------------------------------------------------------
+    match /fees/{feeId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // MONTHLY FINALIZATION LOCKS
+    // ------------------------------------------------------------
+    match /monthlyFinalizations/{finId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ------------------------------------------------------------
+    // FINALIZED FEE STATEMENTS
+    // ------------------------------------------------------------
+    match /finalizedFees/{feeId} {
+      allow read, write: if isAuthenticated();
+    }
+
+  }
+}
