@@ -136,6 +136,8 @@ body {
 .toast-error span { color: var(--danger); }
 .toast-info { border-left-color: var(--primary); }
 .toast-info span { color: var(--primary); }
+.toast-warning { border-left-color: #d97706; }
+.toast-warning span { color: #d97706; }
 
 /* ============================================================
    ADMIN LOGIN SCREEN (EMAIL + PASSWORD ONLY)
@@ -256,6 +258,11 @@ body {
   color: #1d4ed8;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
   font-weight: 700;
+}
+
+.btn-role-tab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .login-form {
@@ -506,6 +513,8 @@ body {
 .modal-card {
   width: 100%;
   max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
   background: white;
   border-radius: 16px;
   padding: 28px;
@@ -2850,8 +2859,7 @@ button:not(.pay-tab):not(.btn-sidebar-toggle):not(.modal-close):not(.nav-item):h
    ============================================================ */
 
 /* 1. 3D PERSPECTIVE CONTAINER ROOT */
-.portal-layout,
-.login-split-container {
+.portal-layout {
   perspective: 1200px;
 }
 

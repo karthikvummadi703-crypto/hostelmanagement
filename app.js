@@ -1,8 +1,11 @@
 // app.js
 // Production Full-Stack Controller for Hostel Management System
+// Build v20260920A (cache-busted module imports)
 
-import { adminAuthContext } from "./auth.js";
-import { auth, isLiveFirebase, updatePassword } from "./firebase-config.js";
+console.log("[hostel] build v20260920A");
+
+import { adminAuthContext } from "./auth.js?v=20260920A";
+import { auth, isLiveFirebase, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "./firebase-config.js?v=20260920A";
 import { 
   branchService, 
   roomService, 
@@ -19,7 +22,7 @@ import {
   analyticsService, 
   exportService,
   studentPortalService
-} from "./services/db-service.js";
+} from "./services/db-service.js?v=20260920A";
 
 // Global Toast Notification Helper
 export function showToast(message, type = "info") {
@@ -218,6 +221,11 @@ async function refreshAllData(hostelId) {
     renderPayments();
     renderSettingsForms();
     await renderMealPricingForm();
+    try {
+      await loadPublishedBills();
+    } catch (bErr) {
+      console.warn("Published bills auto-load warning:", bErr);
+    }
   } catch (err) {
     console.error("Error refreshing dashboard data:", err);
   }
@@ -319,6 +327,7 @@ function renderStudents() {
           ${s.roomNo && s.roomNo !== "Unassigned" 
             ? `<button type="button" class="btn-sm btn-deallocate" data-uid="${s.uid}" style="background:#fee2e2;color:#b91c1c;padding:5px 9px;font-size:11px;">Deallocate</button>` 
             : `<button type="button" class="btn-sm btn-to-allot" data-uid="${s.uid}" style="background:#dbeafe;color:#1d4ed8;padding:5px 9px;font-size:11px;">Allot Room</button>`}
+          <button type="button" class="btn-sm btn-edit-student" data-uid="${s.uid}" data-id="${s.id || ''}" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 9px;font-size:11px;border-radius:6px;cursor:pointer;">Edit</button>
           <button type="button" class="btn-sm btn-delete-student" data-uid="${s.uid}" data-name="${escapeHtml(s.name || s.rollNo)}" style="background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;padding:5px 9px;font-size:11px;border-radius:6px;cursor:pointer;">Delete</button>
         </div>
       </td>
@@ -349,15 +358,56 @@ function renderStudents() {
     });
   });
 
+  document.querySelectorAll(".btn-edit-student").forEach(b => {
+    b.addEventListener("click", () => {
+      const uid = b.dataset.uid;
+      const id = b.dataset.id || uid;
+      const s = appState.students.find(x => x.uid === uid || x.id === id || x.uid === id);
+      if (!s) return;
+
+      const modal = document.getElementById("modal-edit-student");
+      if (!modal) return;
+
+      document.getElementById("edit-student-uid").value = id;
+      document.getElementById("edit-student-roll").value = s.rollNo || "";
+      document.getElementById("edit-student-name").value = s.name || "";
+      document.getElementById("edit-student-email").value = s.email || "";
+      document.getElementById("edit-student-joining-month").value = s.joiningMonth || "2026-01";
+
+      const statusSel = document.getElementById("edit-student-status");
+      if (statusSel) statusSel.value = s.status === "inactive" ? "inactive" : "active";
+
+      const branchSel = document.getElementById("edit-student-branch");
+      if (branchSel) {
+        const branchOpts = (appState.branches || []).map(x => `<option value="${escapeHtml(x.code)}">${escapeHtml(x.code)} - ${escapeHtml(x.name)}</option>`).join("");
+        branchSel.innerHTML = branchOpts || '<option value="CSE">CSE</option>';
+        branchSel.value = s.branchName || s.branchId || "CSE";
+      }
+
+      const yearSel = document.getElementById("edit-student-year");
+      if (yearSel && s.year) yearSel.value = s.year;
+
+      modal.style.display = "flex";
+    });
+  });
+
   document.querySelectorAll(".btn-delete-student").forEach(b => {
     b.addEventListener("click", async (e) => {
       const uid = e.target.dataset.uid;
       const name = e.target.dataset.name;
-      if (!confirm(`Are you sure you want to delete student "${name}"? This action cannot be undone.`)) return;
+      const pwd = window.prompt(
+        `Delete student "${name}"?\n\nTo also delete their Firebase Login credentials, enter the student's current password.\nLeave blank to only remove their data (login account will remain).`,
+        ""
+      );
+      if (pwd === null) return;
       try {
-        await studentService.deleteStudent(uid);
+        const result = await studentService.deleteStudent(uid, { password: pwd });
         appState.students = appState.students.filter(s => s.uid !== uid && s.id !== uid);
-        showToast(`Student "${name}" deleted successfully.`, "success");
+        if (result.authDeleted) {
+          showToast(`Student "${name}" deleted. Login credentials removed too.`, "success");
+        } else {
+          showToast(`Student "${name}" deleted. Login credential was not removed (no/incorrect password) — delete it in the Firebase Console to fully revoke access.`, "warning");
+        }
         await refreshAllData(adminAuthContext.currentAdmin.hostelId);
       } catch (err) {
         showToast(err.message, "error");
@@ -983,6 +1033,87 @@ async function loadAttendanceRoster() {
 }
 
 // ============================================================
+// 6b. PUBLISHED BILLS (FINALIZED MONTHS) RENDERING
+// ============================================================
+function formatPublishedMonthLabel(monthKey) {
+  const m = String(monthKey || "");
+  const parts = m.split("_");
+  if (parts.length !== 2) return m;
+  const names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const idx = parseInt(parts[1], 10) - 1;
+  return `${names[idx] || parts[1]} ${parts[0]}`;
+}
+
+async function loadPublishedBills() {
+  const tbody = document.getElementById("published-bills-tbody");
+  const hostelId = adminAuthContext.currentAdmin?.hostelId;
+  if (!tbody || !hostelId) return;
+
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">Loading published bills...</td></tr>';
+  try {
+    const months = await attendanceService.getPublishedMonths(hostelId);
+    if (!months.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">No published bills yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = months.map(m => {
+      const t = m.totals || { billed: 0, paid: 0, pending: 0, students: 0 };
+      return `
+        <tr>
+          <td><b>${escapeHtml(formatPublishedMonthLabel(m.monthKey))}</b></td>
+          <td>${t.students}</td>
+          <td>₹${Number(t.billed).toLocaleString()}</td>
+          <td style="color:#15803d;">₹${Number(t.paid).toLocaleString()}</td>
+          <td style="color:#b45309;">₹${Number(t.pending).toLocaleString()}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="btn-view-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#dbeafe;color:#1d4ed8;">👁 View</button>
+              <button type="button" class="btn-delete-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#fee2e2;color:#b91c1c;">🗑 Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#dc2626;">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+async function openPublishedBillDetails(monthKey) {
+  const modal = document.getElementById("modal-published-bill-details");
+  const titleEl = document.getElementById("published-bill-details-title");
+  const tbody = document.getElementById("published-bill-details-tbody");
+  const hostelId = adminAuthContext.currentAdmin?.hostelId;
+  if (!modal || !tbody || !hostelId) return;
+  if (titleEl) titleEl.textContent = formatPublishedMonthLabel(monthKey);
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Loading...</td></tr>';
+  modal.style.display = "flex";
+  try {
+    const rows = await attendanceService.getPublishedMonthDetails(hostelId, monthKey);
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">No statements found for this month.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => {
+      const mess = (Number(r.breakfastCost) || 0) + (Number(r.lunchCost) || 0) + (Number(r.dinnerCost) || 0) + (Number(r.customMealsCost) || 0);
+      return `
+        <tr>
+          <td><b>${escapeHtml(r.rollNo || "")}</b></td>
+          <td>${escapeHtml(r.studentName || "")}</td>
+          <td>₹${Number(r.monthlyRent || 0).toLocaleString()}</td>
+          <td>₹${Number(mess).toLocaleString()}</td>
+          <td>₹${Number(r.totalAmount || 0).toLocaleString()}</td>
+          <td style="color:#15803d;">₹${Number(r.paidAmount || 0).toLocaleString()}</td>
+          <td style="color:#b45309;">₹${Number(r.pendingAmount || 0).toLocaleString()}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:#dc2626;">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+// ============================================================
 // 7. COMPLAINTS RENDERING
 // ============================================================
 function renderComplaints() {
@@ -1352,6 +1483,8 @@ function setupEvents() {
       if (loginHeaderSubtext) loginHeaderSubtext.textContent = "Enter your registered administrator email and password to access your hostel control panel.";
       if (loginEmailLabel) loginEmailLabel.textContent = "Administrator Email / Username";
       if (loginEmailInput) loginEmailInput.placeholder = "e.g. admin@example.com";
+      const forgotLink = document.getElementById("btn-forgot-password");
+      if (forgotLink) forgotLink.textContent = "Forgot Password?";
     });
 
     roleStudentBtn.addEventListener("click", () => {
@@ -1370,6 +1503,8 @@ function setupEvents() {
       if (loginHeaderSubtext) loginHeaderSubtext.textContent = "Enter your registered student Roll Number and password to access your resident portal.";
       if (loginEmailLabel) loginEmailLabel.textContent = "Student Roll Number or Email";
       if (loginEmailInput) loginEmailInput.placeholder = "e.g. 25001A501 or student@hostel.local";
+      const forgotLink = document.getElementById("btn-forgot-password");
+      if (forgotLink) forgotLink.textContent = "Change Password";
     });
   }
 
@@ -1383,6 +1518,17 @@ function setupEvents() {
       togglePassBtn.textContent = isPass ? "🙈" : "👁️";
     });
   }
+
+  // Show/Hide toggles for every other password field on the page
+  document.querySelectorAll("button.btn-toggle-pass:not(#btn-toggle-password)").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = btn.previousElementSibling;
+      if (!input || !input.tagName || input.tagName.toLowerCase() !== "input") return;
+      const isPass = input.type === "password";
+      input.type = isPass ? "text" : "password";
+      btn.textContent = isPass ? "🙈" : "👁️";
+    });
+  });
 
   // 2. Admin / Student Login
   const loginForm = document.getElementById("form-login");
@@ -1423,11 +1569,37 @@ function setupEvents() {
   const closeForgotModalBtn = document.getElementById("btn-close-forgot-modal");
   const forgotForm = document.getElementById("form-forgot-password");
 
+  function setForgotMode(isStudent) {
+    const adminFields = document.getElementById("forgot-admin-fields");
+    const studentFields = document.getElementById("forgot-student-fields");
+    const titleEl = document.getElementById("forgot-modal-title");
+    const descEl = document.getElementById("forgot-modal-desc");
+    const submitBtn = document.getElementById("btn-send-reset");
+
+    if (adminFields) adminFields.style.display = isStudent ? "none" : "block";
+    if (studentFields) studentFields.style.display = isStudent ? "block" : "none";
+
+    if (isStudent) {
+      if (titleEl) titleEl.textContent = "Change Student Password";
+      if (descEl) descEl.textContent = "Students sign in with their Roll Number, so no email is needed. Verify your current password and set your new one below.";
+      if (submitBtn) submitBtn.textContent = "Change Password";
+      const loginId = document.getElementById("login-email").value;
+      const rollInput = document.getElementById("forgot-student-roll");
+      if (rollInput && loginId) rollInput.value = loginId;
+    } else {
+      if (titleEl) titleEl.textContent = "Reset Admin Password";
+      if (descEl) descEl.textContent = "Enter your registered administrator email address. A password reset link will be dispatched directly to your inbox via Firebase Authentication.";
+      if (submitBtn) submitBtn.textContent = "Send Password Reset Link";
+      const currentEmail = document.getElementById("login-email").value;
+      if (currentEmail) document.getElementById("forgot-email").value = currentEmail;
+    }
+  }
+
   if (forgotPassBtn && forgotModal) {
     forgotPassBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      const currentEmail = document.getElementById("login-email").value;
-      if (currentEmail) document.getElementById("forgot-email").value = currentEmail;
+      const selectedRole = document.getElementById("login-role")?.value || "admin";
+      setForgotMode(selectedRole === "student");
       forgotModal.style.display = "flex";
     });
   }
@@ -1441,8 +1613,79 @@ function setupEvents() {
   if (forgotForm) {
     forgotForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("forgot-email").value;
       const btn = document.getElementById("btn-send-reset");
+      const selectedRole = document.getElementById("login-role")?.value || "admin";
+
+      if (selectedRole === "student") {
+        const roll = (document.getElementById("forgot-student-roll")?.value || "").trim();
+        const currentPwd = document.getElementById("forgot-student-current-password")?.value || "";
+        const newPwd = document.getElementById("forgot-student-new-password")?.value || "";
+
+        if (!roll) {
+          showToast("Please enter your roll number.", "error");
+          return;
+        }
+        if (!currentPwd) {
+          showToast("Please enter your current password.", "error");
+          return;
+        }
+        if (!newPwd || newPwd.length < 6) {
+          showToast("New password must be at least 6 characters.", "error");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Updating...';
+
+        try {
+          const msg = await adminAuthContext.changeStudentPassword(roll, currentPwd, newPwd);
+          showToast(msg, "success");
+          document.getElementById("forgot-student-current-password").value = "";
+          document.getElementById("forgot-student-new-password").value = "";
+          forgotModal.style.display = "none";
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Change Password";
+        }
+        return;
+      }
+
+      // Admin mode: Firebase email reset link
+      const email = (document.getElementById("forgot-email").value || "").trim();
+      if (!email) {
+        showToast("Please enter your email address.", "error");
+        return;
+      }
+      // Safety net: if the admin form receives a Roll Number (no "@") or a roll-based
+      // student email, switch automatically to the student change-password flow.
+      const looksLikeStudent = !/@/.test(email) || /@hostel\.local$/i.test(email);
+      if (looksLikeStudent) {
+        setForgotMode(true);
+        // Sync the hidden role + tab UI so the next submit runs the student
+        // change-password branch instead of looping back to this admin branch.
+        const roleInput = document.getElementById("login-role");
+        if (roleInput) roleInput.value = "student";
+        const roleAdminBtn = document.getElementById("btn-role-admin");
+        const roleStudentBtn = document.getElementById("btn-role-student");
+        if (roleAdminBtn && roleStudentBtn) {
+          roleStudentBtn.classList.add("active");
+          roleStudentBtn.style.background = "#ffffff";
+          roleStudentBtn.style.color = "var(--primary)";
+          roleStudentBtn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
+          roleAdminBtn.classList.remove("active");
+          roleAdminBtn.style.background = "transparent";
+          roleAdminBtn.style.color = "#64748b";
+          roleAdminBtn.style.boxShadow = "none";
+        }
+        const forgotLink = document.getElementById("btn-forgot-password");
+        if (forgotLink) forgotLink.textContent = "Change Password";
+        const rollInput = document.getElementById("forgot-student-roll");
+        if (rollInput) rollInput.value = email;
+        showToast("That's a student account — showing the student security form.", "info");
+        return;
+      }
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Sending...';
 
@@ -1492,6 +1735,57 @@ function setupEvents() {
       } finally {
         btn.disabled = false;
         btn.textContent = "Create Student Account";
+      }
+    });
+  }
+
+  // 5b. Edit Student Modal
+  const editStudentModal = document.getElementById("modal-edit-student");
+  const closeEditStudentModalBtn = document.getElementById("btn-close-edit-student-modal");
+  const editStudentForm = document.getElementById("form-edit-student");
+
+  if (closeEditStudentModalBtn && editStudentModal) {
+    closeEditStudentModalBtn.addEventListener("click", () => {
+      editStudentModal.style.display = "none";
+    });
+  }
+
+  if (editStudentModal) {
+    editStudentModal.addEventListener("click", (e) => {
+      if (e.target === editStudentModal) editStudentModal.style.display = "none";
+    });
+  }
+
+  if (editStudentForm) {
+    editStudentForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const uid = document.getElementById("edit-student-uid").value;
+      const name = document.getElementById("edit-student-name").value.trim();
+      const email = document.getElementById("edit-student-email").value.trim().toLowerCase();
+      const branch = document.getElementById("edit-student-branch").value;
+      const year = document.getElementById("edit-student-year").value;
+      const joiningMonth = document.getElementById("edit-student-joining-month").value;
+      const status = document.getElementById("edit-student-status").value;
+      const btn = document.getElementById("btn-save-edit-student");
+
+      if (!uid || !name || !email || !joiningMonth) {
+        showToast("Please fill in all required fields.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+      try {
+        await studentService.updateStudent(uid, { name, email, branchName: branch, year, joiningMonth, status });
+        showToast(`Student ${document.getElementById("edit-student-roll").value} updated successfully.`, "success");
+        editStudentModal.style.display = "none";
+        await refreshAllData(adminAuthContext.currentAdmin.hostelId);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save Changes";
       }
     });
   }
@@ -1707,6 +2001,7 @@ function setupEvents() {
   if (finalizeMonthSelect) {
     finalizeMonthSelect.addEventListener("change", checkFinalizeStatus);
     checkFinalizeStatus();
+    loadPublishedBills();
   }
 
   if (triggerFinalizeBtn && modalFinalize) {
@@ -1733,9 +2028,75 @@ function setupEvents() {
         if (modalFinalize) modalFinalize.style.display = "none";
         await checkFinalizeStatus();
         await loadAttendanceRoster();
+        await loadPublishedBills();
         await refreshAllData(adminAuthContext.currentAdmin.hostelId);
       } catch (err) {
         showToast(err.message, "error");
+      }
+    });
+  }
+
+  // Previously Published Bills: list / view / delete
+  const refreshPublishedBtn = document.getElementById("btn-refresh-published-bills");
+  if (refreshPublishedBtn) {
+    refreshPublishedBtn.addEventListener("click", async () => {
+      await loadPublishedBills();
+    });
+  }
+
+  const publishedTbody = document.getElementById("published-bills-tbody");
+  if (publishedTbody) {
+    publishedTbody.addEventListener("click", async (e) => {
+      const viewBtn = e.target.closest("[data-month].btn-view-published, .btn-view-published");
+      const delBtn = e.target.closest("[data-month].btn-delete-published, .btn-delete-published");
+      if (viewBtn && viewBtn.dataset.month) {
+        await openPublishedBillDetails(viewBtn.dataset.month);
+        return;
+      }
+      if (delBtn && delBtn.dataset.month) {
+        const mk = delBtn.dataset.month;
+        const hiddenInput = document.getElementById("delete-published-month-key");
+        const msgEl = document.getElementById("delete-published-confirm-message");
+        const delModal = document.getElementById("modal-confirm-delete-published");
+        if (hiddenInput) hiddenInput.value = mk;
+        if (msgEl) msgEl.textContent = `Permanently delete the published bill for ${formatPublishedMonthLabel(mk)}? This removes all ${formatPublishedMonthLabel(mk)} fee statements and unlocks the month so attendance can be edited and re-published. Payments already recorded are kept.`;
+        if (delModal) delModal.style.display = "flex";
+      }
+    });
+  }
+
+  const detailsModal = document.getElementById("modal-published-bill-details");
+  const closeDetailsBtn = document.getElementById("btn-close-published-bill-modal");
+  const closeDetailsBtn2 = document.getElementById("btn-close-published-bill-details");
+  if (closeDetailsBtn && detailsModal) closeDetailsBtn.addEventListener("click", () => { detailsModal.style.display = "none"; });
+  if (closeDetailsBtn2 && detailsModal) closeDetailsBtn2.addEventListener("click", () => { detailsModal.style.display = "none"; });
+  if (detailsModal) detailsModal.addEventListener("click", (e) => { if (e.target === detailsModal) detailsModal.style.display = "none"; });
+
+  const delModal = document.getElementById("modal-confirm-delete-published");
+  const closeDelBtn = document.getElementById("btn-close-delete-published-modal");
+  const cancelDelBtn = document.getElementById("btn-cancel-delete-published");
+  const proceedDelBtn = document.getElementById("btn-proceed-delete-published");
+  if (closeDelBtn && delModal) closeDelBtn.addEventListener("click", () => { delModal.style.display = "none"; });
+  if (cancelDelBtn && delModal) cancelDelBtn.addEventListener("click", () => { delModal.style.display = "none"; });
+  if (delModal) delModal.addEventListener("click", (e) => { if (e.target === delModal) delModal.style.display = "none"; });
+  if (proceedDelBtn) {
+    proceedDelBtn.addEventListener("click", async () => {
+      const mk = document.getElementById("delete-published-month-key")?.value || "";
+      if (!mk) return;
+      proceedDelBtn.disabled = true;
+      proceedDelBtn.innerHTML = '<span class="spinner"></span> Deleting...';
+      try {
+        const res = await attendanceService.deletePublishedMonth(adminAuthContext.currentAdmin.hostelId, mk);
+        showToast(`Deleted published bill for ${formatPublishedMonthLabel(mk)} (${res.deletedStatements} statements removed). Month is editable again.`, "success");
+        if (delModal) delModal.style.display = "none";
+        await checkFinalizeStatus();
+        await loadAttendanceRoster();
+        await loadPublishedBills();
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        proceedDelBtn.disabled = false;
+        proceedDelBtn.textContent = "Delete Bill";
       }
     });
   }
@@ -2148,22 +2509,37 @@ function setupEvents() {
   if (pwdForm) {
     pwdForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const newPwd = document.getElementById("student-new-password").value;
-      if (!newPwd || newPwd.length < 6) {
-        showToast("Password must be at least 6 characters.", "error");
+      const currentPwd = document.getElementById("student-current-password")?.value || "";
+      const newPwd = document.getElementById("student-new-password")?.value || "";
+      const confirmPwd = document.getElementById("student-confirm-new-password")?.value || "";
+      const btn = document.getElementById("btn-submit-student-change-password");
+
+      if (!currentPwd) {
+        showToast("Please enter your current password.", "error");
         return;
       }
+      if (!newPwd || newPwd.length < 6) {
+        showToast("New password must be at least 6 characters.", "error");
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        showToast("New password and confirmation do not match.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Updating...';
+
       try {
-        if (isLiveFirebase && auth.currentUser) {
-          await updatePassword(auth.currentUser, newPwd);
-          showToast("Password updated successfully.", "success");
-          pwdForm.reset();
-        } else {
-          showToast("Password updated successfully.", "success");
-          pwdForm.reset();
-        }
+        const identifier = currentStudentProfile?.rollNo || auth.currentUser?.email || currentStudentProfile?.email || "";
+        const msg = await adminAuthContext.changeStudentPassword(identifier, currentPwd, newPwd);
+        showToast(msg, "success");
+        pwdForm.reset();
       } catch (err) {
         showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Update Password";
       }
     });
   }
@@ -2172,19 +2548,42 @@ function setupEvents() {
   if (adminPwdForm) {
     adminPwdForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const currentPwd = document.getElementById("admin-current-password")?.value || "";
       const newPwd = document.getElementById("admin-new-password").value;
+      if (!currentPwd) {
+        showToast("Please enter your current password.", "error");
+        return;
+      }
       if (!newPwd || newPwd.length < 6) {
         showToast("Password must be at least 6 characters.", "error");
         return;
       }
       try {
         if (isLiveFirebase && auth.currentUser) {
-          await updatePassword(auth.currentUser, newPwd);
+          // Re-authenticate first so Firebase accepts the update even on old sessions
+          const email = auth.currentUser.email || "";
+          await reauthenticateWithCredential(
+            auth.currentUser,
+            EmailAuthProvider.credential(email, currentPwd)
+          );
+          if (String(newPwd) !== String(currentPwd)) {
+            await updatePassword(auth.currentUser, newPwd);
+          }
+          showToast(String(newPwd) === String(currentPwd)
+            ? "New password matches the current one, no update needed."
+            : "Admin password updated successfully.", "success");
+        } else {
+          showToast("Admin password updated successfully.", "success");
         }
-        showToast("Admin password updated successfully.", "success");
         adminPwdForm.reset();
       } catch (err) {
-        showToast(err.message, "error");
+        let msg = err.message;
+        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+          msg = "Current password is incorrect.";
+        } else if (err.code === "auth/weak-password") {
+          msg = "New password is too weak. Use at least 6 characters.";
+        }
+        showToast(msg, "error");
       }
     });
   }
@@ -2266,6 +2665,8 @@ async function renderStudentActiveSection() {
       break;
     case "student-announcements":
       await loadStudentAnnouncements();
+      break;
+    case "student-security":
       break;
     default:
       await loadStudentProfile();
@@ -2393,6 +2794,45 @@ async function loadStudentComplaints() {
   `).join("");
 }
 
+// Month-wise due table (FIFO allocation computed by studentPortalService.getMonthlyFeeDues)
+function renderMonthlyDues(monthly) {
+  const tbody = document.getElementById("monthly-dues-tbody");
+  const totalEl = document.getElementById("monthly-dues-total-outstanding");
+  if (!tbody) return;
+
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  const months = monthly.months || [];
+  if (months.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">No published fee statements yet.</td></tr>`;
+    if (totalEl) totalEl.textContent = "₹0";
+    return;
+  }
+
+  tbody.innerHTML = months.map(m => {
+    const parts = String(m.monthKey).split("_");
+    const label = parts.length === 2 && monthNames[parseInt(parts[1], 10) - 1]
+      ? `${monthNames[parseInt(parts[1], 10) - 1]} ${parts[0]}`
+      : m.monthKey;
+
+    let badgeCls = "badge-danger";
+    let badgeTxt = "Due";
+    if (m.status === "PAID") { badgeCls = "badge-success"; badgeTxt = "Paid"; }
+    else if (m.status === "PARTIALLY PAID") { badgeCls = "badge-warning"; badgeTxt = "Partially Paid"; }
+
+    return `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(label)}</td>
+        <td>₹${(m.finalAmount || 0).toLocaleString()}</td>
+        <td style="color:#15803d;">₹${(m.paid || 0).toLocaleString()}</td>
+        <td style="color:#b91c1c; font-weight:700;">₹${(m.due || 0).toLocaleString()}</td>
+        <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
+      </tr>`;
+  }).join("");
+
+  if (totalEl) totalEl.textContent = `₹${(monthly.totalOutstanding || 0).toLocaleString()}`;
+}
+
 async function loadStudentPayments() {
   if (!currentStudentProfile) return;
 
@@ -2403,12 +2843,28 @@ async function loadStudentPayments() {
 
   const selectedMonth = monthPicker ? monthPicker.value : new Date().toISOString().slice(0, 7);
 
+  // Month-wise FIFO fee dues across all published/finalized months (oldest outstanding first)
+  const monthly = await studentPortalService.getMonthlyFeeDues(
+    currentStudentProfile.uid,
+    currentStudentProfile.hostelId
+  );
+  renderMonthlyDues(monthly);
+
   // Fee calculation & breakdown
   const dues = await studentPortalService.calculateStudentFeeDues(
     currentStudentProfile.uid, 
     currentStudentProfile.hostelId, 
     selectedMonth
   );
+
+  // Override paid/net with the FIFO-consistent values so the summary card always
+  // matches the month-wise table exactly (oldest outstanding month gets paid first).
+  const monthKey = selectedMonth.replace(/-/g, "_");
+  const monthFifo = (monthly.months || []).find(m => String(m.monthKey) === monthKey);
+  if (monthFifo) {
+    dues.paid = monthFifo.paid;
+    dues.net = monthFifo.due;
+  }
 
   const feeTotalEl = document.getElementById("student-fee-total");
   const feePaidEl = document.getElementById("student-fee-paid");
@@ -2654,7 +3110,7 @@ async function loadStudentAnnouncements() {
 // Interactive 3D Cursor Tilt Effect
 function init3DTiltEffects() {
   document.addEventListener("mousemove", (e) => {
-    const tiltTarget = e.target.closest(".stats > div, .pay-stat-card, .metric, .login-card-content");
+    const tiltTarget = e.target.closest(".stats > div, .pay-stat-card, .metric");
     if (!tiltTarget) return;
 
     const rect = tiltTarget.getBoundingClientRect();
@@ -2671,7 +3127,7 @@ function init3DTiltEffects() {
   });
 
   document.addEventListener("mouseout", (e) => {
-    const tiltTarget = e.target.closest(".stats > div, .pay-stat-card, .metric, .login-card-content");
+    const tiltTarget = e.target.closest(".stats > div, .pay-stat-card, .metric");
     if (tiltTarget) {
       tiltTarget.style.transform = "";
     }

@@ -8,6 +8,10 @@ import {
   uploadBytes,
   getDownloadURL,
   isLiveFirebase, 
+  getSecondaryAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  deleteUser,
   doc, 
   getDoc, 
   setDoc, 
@@ -16,7 +20,7 @@ import {
   query, 
   where, 
   serverTimestamp 
-} from "../firebase-config.js";
+} from "../firebase-config.js?v=20260920A";
 import { 
   deleteDoc, 
   updateDoc, 
@@ -159,14 +163,39 @@ export const studentService = {
     return true;
   },
 
-  async deleteStudent(studentUid) {
+  async updateStudent(studentUid, data) {
     if (!studentUid) throw new Error("Student ID is required.");
+    const allowed = ["name", "email", "branchName", "year", "joiningMonth", "status"];
+    const payload = {};
+    allowed.forEach(k => {
+      if (data[k] !== undefined && data[k] !== null) payload[k] = data[k];
+    });
+    payload.updatedAt = serverTimestamp();
+    await updateDoc(doc(db, "students", studentUid), payload);
+    return true;
+  },
+
+  /**
+   * Deletes a student thoroughly:
+   *  1. Deallocates their room
+   *  2. Purges payments, fee statements (finalizedFees) and complaints for the student
+   *  3. Deletes the students/{uid} profile document
+   *  4. Optionally deletes the Firebase Authentication login account too (requires the
+   *     student's current password — the client SDK can only delete the account it can
+   *     authenticate as). Returns { deleted, authDeleted }.
+   */
+  async deleteStudent(studentUid, { password = "" } = {}) {
+    if (!studentUid) throw new Error("Student ID is required.");
+    let authDeleted = false;
+
     if (isLiveFirebase && db) {
       try {
         const studentRef = doc(db, "students", studentUid);
         const studentSnap = await getDoc(studentRef);
         if (studentSnap && studentSnap.exists()) {
           const data = studentSnap.data();
+
+          // Auto-deallocate assigned room
           if (data.roomId) {
             try {
               const roomRef = doc(db, "rooms", data.roomId);
@@ -184,13 +213,58 @@ export const studentService = {
               console.warn("Could not auto-deallocate room for deleted student:", rErr);
             }
           }
+
+          // Purge every student-related record
+          const cleanupCollections = ["payments", "finalizedFees", "complaints"];
+          for (const coll of cleanupCollections) {
+            try {
+              const q = query(collection(db, coll), where("studentUid", "==", studentUid));
+              const snap = await getDocs(q);
+              const promises = [];
+              snap.forEach(d => promises.push(deleteDoc(doc(db, coll, d.id))));
+              await Promise.all(promises);
+            } catch (collErr) {
+              console.warn(`Could not purge ${coll} for deleted student:`, collErr);
+            }
+          }
+
           await deleteDoc(studentRef);
+
+          // Delete Firebase Auth credentials (student can no longer log in)
+          const passwordClean = (password || "").trim();
+          if (passwordClean) {
+            try {
+              const secAuth = await getSecondaryAuth();
+              if (secAuth) {
+                const candidateEmails = [
+                  data.email,
+                  data.rollNo ? `${data.rollNo.toLowerCase()}@hostel.local` : ""
+                ].filter(Boolean).map(e => e.trim().toLowerCase());
+
+                for (const accountEmail of candidateEmails) {
+                  try {
+                    const cred = await signInWithEmailAndPassword(secAuth, accountEmail, passwordClean);
+                    await deleteUser(cred.user);
+                    await signOut(secAuth);
+                    authDeleted = true;
+                    break;
+                  } catch (signErr) {
+                    if (signErr.code === "auth/invalid-credential" || signErr.code === "auth/user-not-found" || signErr.code === "auth/wrong-password") continue;
+                    throw signErr;
+                  }
+                }
+              }
+            } catch (authErr) {
+              console.warn("Could not delete student Firebase Auth account:", authErr.code || authErr.message);
+            }
+          }
         }
       } catch (err) {
         console.warn("Firestore delete student error:", err);
       }
     }
-    return true;
+
+    return { deleted: true, authDeleted };
   }
 };
 
@@ -406,6 +480,82 @@ export const attendanceService = {
     // Freeze and store student fee calculations in database
     await feeService.finalizeMonthlyFees(hostelId, cleanMonthKey);
     return finRecord;
+  },
+
+  async getPublishedMonths(hostelId) {
+    if (!hostelId) return [];
+    try {
+      const q = query(collection(db, "monthlyFinalizations"), where("hostelId", "==", hostelId));
+      const snap = await getDocs(q);
+      const months = [];
+      snap.forEach(d => months.push({ id: d.id, ...d.data() }));
+      // Aggregate finalized fee totals per month in a single extra query
+      let totalsByMonth = {};
+      try {
+        const fq = query(collection(db, "finalizedFees"), where("hostelId", "==", hostelId));
+        const fsnap = await getDocs(fq);
+        fsnap.forEach(d => {
+          const f = d.data();
+          const mk = String(f.monthKey || "");
+          if (!mk) return;
+          if (!totalsByMonth[mk]) totalsByMonth[mk] = { billed: 0, paid: 0, pending: 0, students: 0 };
+          totalsByMonth[mk].billed += Number(f.totalAmount) || 0;
+          totalsByMonth[mk].paid += Number(f.paidAmount) || 0;
+          totalsByMonth[mk].pending += Number(f.pendingAmount) || 0;
+          totalsByMonth[mk].students += 1;
+        });
+      } catch (tErr) {
+        console.warn("Could not aggregate finalized fee totals:", tErr);
+      }
+      return months
+        .map(m => ({
+          ...m,
+          monthKey: String(m.monthKey || ""),
+          totals: totalsByMonth[String(m.monthKey || "")] || { billed: 0, paid: 0, pending: 0, students: 0 }
+        }))
+        .sort((a, b) => String(b.monthKey).localeCompare(String(a.monthKey)));
+    } catch (err) {
+      console.warn("Error loading published months:", err);
+      return [];
+    }
+  },
+
+  async getPublishedMonthDetails(hostelId, monthKey) {
+    if (!hostelId || !monthKey) return [];
+    const cleanMonthKey = String(monthKey).replace(/-/g, "_");
+    try {
+      const q = query(
+        collection(db, "finalizedFees"),
+        where("hostelId", "==", hostelId),
+        where("monthKey", "==", cleanMonthKey)
+      );
+      const snap = await getDocs(q);
+      const rows = [];
+      snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
+      return rows.sort((a, b) => String(a.rollNo || "").localeCompare(String(b.rollNo || "")));
+    } catch (err) {
+      console.warn("Error loading published bill details:", err);
+      throw new Error("Could not load published bill details.");
+    }
+  },
+
+  async deletePublishedMonth(hostelId, monthKey) {
+    if (!hostelId || !monthKey) throw new Error("Hostel ID and Month are required.");
+    const cleanMonthKey = String(monthKey).replace(/-/g, "_");
+    const finDocId = `${hostelId}_${cleanMonthKey}`;
+    // Collect finalized fee statements for this hostel + month
+    const q = query(
+      collection(db, "finalizedFees"),
+      where("hostelId", "==", hostelId),
+      where("monthKey", "==", cleanMonthKey)
+    );
+    const snap = await getDocs(q);
+    const deletions = [];
+    snap.forEach(d => deletions.push(deleteDoc(doc(db, "finalizedFees", d.id))));
+    // Remove the finalization lock so attendance becomes editable again
+    deletions.push(deleteDoc(doc(db, "monthlyFinalizations", finDocId)));
+    await Promise.all(deletions);
+    return { deletedStatements: snap.size };
   },
 
   async getAttendance(hostelId, dateStr, meal) {
@@ -1397,6 +1547,72 @@ export const studentPortalService = {
     } catch (err) {
       console.error("Error calculating student fee dues:", err);
       return { monthlyRent: 0, breakfastCost: 0, lunchCost: 0, dinnerCost: 0, customMealsCost: 0, total: 0, paid: 0, net: 0, bfCount: 0, lunchCount: 0, dinnerCount: 0, customMealsCount: 0, isFinalized: false };
+    }
+  },
+
+  /**
+   * Computes month-wise outstanding fee dues for a student with FIFO payment allocation.
+   * Uses ONLY published/finalized monthly fee records and ONLY verified/approved payments.
+   * Verified payments are allocated to the OLDEST outstanding month first.
+   * Deterministic — computed live from stored records, so page refreshes never alter,
+   * double-allocate, or duplicate a payment. Nothing is persisted.
+   */
+  async getMonthlyFeeDues(studentUid, hostelId) {
+    if (!hostelId || !studentUid) return { months: [], totalOutstanding: 0, totalVerified: 0 };
+
+    try {
+      const q = query(collection(db, "finalizedFees"), where("studentUid", "==", studentUid));
+      const snap = await getDocs(q);
+      const months = [];
+
+      snap.forEach(d => {
+        const f = d.data();
+        if (f.hostelId !== hostelId) return;
+        if (!f.monthKey) return;
+        months.push({
+          id: d.id,
+          monthKey: String(f.monthKey),
+          finalAmount: Number(f.totalAmount) || 0
+        });
+      });
+
+      if (months.length === 0) {
+        return { months: [], totalOutstanding: 0, totalVerified: 0 };
+      }
+
+      // Only VERIFIED/APPROVED payments affect the student's paid amount.
+      // PENDING and REJECTED payments must NOT reduce the balance.
+      const payments = await this.getStudentPayments(studentUid, hostelId);
+      let verifiedTotal = 0;
+      payments.forEach(p => {
+        if (p.status === "Verified" || p.status === "Approved") {
+          verifiedTotal += Number(p.amount) || 0;
+        }
+      });
+
+      // Sort YEAR ASC, MONTH ASC (monthKey is YYYY_MM, lexicographic order equals chronological)
+      months.sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+
+      // FIFO allocation: sweep verified payments across the oldest outstanding month first.
+      let remaining = verifiedTotal;
+      const allocatedMonths = months.map(m => {
+        const paid = Math.min(m.finalAmount, remaining);
+        remaining = Math.max(0, remaining - paid);
+        const due = Math.max(0, m.finalAmount - paid);
+
+        let status = "DUE";
+        if (paid > 0 && due > 0) status = "PARTIALLY PAID";
+        else if (due <= 0) status = "PAID";
+
+        return { ...m, paid, due, status };
+      });
+
+      const totalOutstanding = allocatedMonths.reduce((s, m) => s + m.due, 0);
+
+      return { months: allocatedMonths, totalOutstanding, totalVerified: verifiedTotal };
+    } catch (err) {
+      console.error("Error computing monthly fee dues:", err);
+      return { months: [], totalOutstanding: 0, totalVerified: 0 };
     }
   },
 

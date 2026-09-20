@@ -12,7 +12,10 @@ import {
   updatePassword,
   setPersistence,
   inMemoryPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { 
   getFirestore, 
@@ -106,6 +109,9 @@ export {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   updatePassword,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   doc, 
   getDoc, 
   setDoc, 

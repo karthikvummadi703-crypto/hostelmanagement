@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Hostel Management System - Enterprise Cloud Portal</title>
 
   <!-- DNS Preconnect: Establish connections BEFORE browser discovers them -->
@@ -21,7 +24,7 @@
   <link rel="modulepreload" href="firebase-config.js">
   <link rel="modulepreload" href="auth.js">
   <link rel="modulepreload" href="services/db-service.js">
-  <link rel="modulepreload" href="app.js">
+  <link rel="modulepreload" href="app.js?v=20260920A">
 
   <!-- Google Fonts: async load to prevent render-blocking -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -161,6 +164,7 @@
           <a href="#forgot" id="btn-forgot-password" class="login-link">Forgot Password?</a>
           <a href="mailto:support@jntua.ac.in" class="login-link">Need Help?</a>
         </div>
+        <div style="text-align:center; margin-top:14px; font-size:11px; color:#94a3b8;">Build <b id="app-version-badge">v20260920A</b></div>
       </div>
     </div>
   </div>
@@ -171,22 +175,123 @@
   <div id="modal-forgot-password" class="modal-overlay" style="display: none;">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Reset Admin Password</h3>
+        <h3 id="forgot-modal-title">Reset Admin Password</h3>
         <button type="button" id="btn-close-forgot-modal" class="modal-close">&times;</button>
       </div>
-      <p class="modal-desc">
+      <p id="forgot-modal-desc" class="modal-desc">
         Enter your registered administrator email address. A password reset link will be dispatched directly to your inbox via Firebase Authentication.
       </p>
       <form id="form-forgot-password">
-        <div class="input-group">
-          <label for="forgot-email">Account Email</label>
-          <div class="input-wrapper">
-            <span class="input-icon">✉️</span>
-            <input type="email" id="forgot-email" placeholder="admin@example.com" required>
+        <!-- Admin Mode: Firebase email reset link -->
+        <div id="forgot-admin-fields">
+          <div class="input-group">
+            <label for="forgot-email">Account Email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="forgot-email" placeholder="admin@example.com">
+            </div>
+          </div>
+        </div>
+        <!-- Student Mode: direct password change (students sign in with Roll Number, no email) -->
+        <div id="forgot-student-fields" style="display: none;">
+          <div class="input-group">
+            <label for="forgot-student-roll">Roll Number or Email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🎓</span>
+              <input type="text" id="forgot-student-roll" placeholder="e.g. 25001A501">
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="forgot-student-current-password">Current Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="forgot-student-current-password" placeholder="Enter current password">
+              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="forgot-student-new-password">New Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="forgot-student-new-password" placeholder="Minimum 6 characters">
+              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+            </div>
           </div>
         </div>
         <div class="modal-actions">
           <button type="submit" id="btn-send-reset" class="btn-primary">Send Password Reset Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- EDIT STUDENT MODAL -->
+  <!-- ============================================================ -->
+  <div id="modal-edit-student" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Student</h3>
+        <button type="button" id="btn-close-edit-student-modal" class="modal-close">&times;</button>
+      </div>
+      <p class="modal-desc">
+        Update the student's profile details. The Roll Number is the login username and cannot be changed here. To change login credentials, the student should use the "Change Password" option on the login page, or delete and re-create the account.
+      </p>
+      <form id="form-edit-student">
+        <input type="hidden" id="edit-student-uid">
+        <div class="input-group">
+          <label for="edit-student-roll">Roll Number (Login ID — read-only)</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🎓</span>
+            <input type="text" id="edit-student-roll" readonly style="background:#f1f5f9; color:#64748b;">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="edit-student-name">Student Name</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" id="edit-student-name" placeholder="Full name" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="edit-student-email">Account Email (display only — login is by Roll Number)</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="edit-student-email" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-group">
+            <label for="edit-student-branch">Academic Branch</label>
+            <select id="edit-student-branch">
+              <option value="CSE">Computer Science & Engineering (CSE)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="edit-student-year">Academic Year</label>
+            <select id="edit-student-year">
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-group">
+            <label for="edit-student-joining-month">Month of Joining</label>
+            <input type="month" id="edit-student-joining-month" required>
+          </div>
+          <div class="input-group">
+            <label for="edit-student-status">Account Status</label>
+            <select id="edit-student-status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" id="btn-save-edit-student" class="btn-primary">Save Changes</button>
         </div>
       </form>
     </div>
@@ -346,7 +451,10 @@
                 <input type="text" id="new-student-roll" placeholder="e.g. 23CSE045" required>
               </label>
               <label>Account Password
-                <input type="password" id="new-student-password" placeholder="Min 6 characters" required minlength="6">
+                <div class="input-wrapper">
+                  <input type="password" id="new-student-password" placeholder="Min 6 characters" required minlength="6" style="padding-right:40px;">
+                  <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+                </div>
               </label>
             </div>
             <div class="row">
@@ -730,6 +838,32 @@
           </div>
           <div id="finalize-status-info" style="margin-top: 12px; font-size: 13px; font-weight: 600; color: #047857;"></div>
         </div>
+
+        <!-- Previously Published Bills -->
+        <div class="card" style="margin-top: 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h3>🧾 Previously Published Bills</h3>
+            <button type="button" id="btn-refresh-published-bills" class="btn-secondary" style="padding:6px 14px;">↻ Refresh</button>
+          </div>
+          <p class="form-subtext">All finalized months for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. View per-student statements or delete a published bill to unlock the month for editing.</p>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Students Billed</th>
+                  <th>Total Billed (₹)</th>
+                  <th>Collected (₹)</th>
+                  <th>Pending (₹)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="published-bills-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">No published bills yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- 7. COMPLAINTS (ISSUE MANAGEMENT) -->
@@ -1099,8 +1233,17 @@
           <h3>Update Admin Password (Firebase Auth)</h3>
           <p class="form-subtext">Updates your single Firebase Authentication password across the platform.</p>
           <form id="form-change-password-admin">
+            <label>Current Password
+              <div class="input-wrapper">
+                <input type="password" id="admin-current-password" placeholder="Enter current password" required style="padding-right:40px;">
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+              </div>
+            </label>
             <label>New Password
-              <input type="password" id="admin-new-password" placeholder="Min 6 characters" required minlength="6">
+              <div class="input-wrapper">
+                <input type="password" id="admin-new-password" placeholder="Min 6 characters" required minlength="6" style="padding-right:40px;">
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+              </div>
             </label>
             <button type="submit">Update Password</button>
           </form>
@@ -1134,6 +1277,7 @@
         <li><a href="#student-payments" class="nav-item"><span class="icon">💳</span><span>Payments</span></a></li>
         <li><a href="#student-mess" class="nav-item"><span class="icon">🍱</span><span>Mess Timetable</span></a></li>
         <li><a href="#student-announcements" class="nav-item"><span class="icon">📢</span><span>Announcements</span></a></li>
+        <li><a href="#student-security" class="nav-item"><span class="icon">🔒</span><span>Change Password</span></a></li>
         <li style="margin-top: auto;"><a href="#student-logout" class="nav-item btn-student-logout-trigger"><span class="icon">🚪</span><span>Logout</span></a></li>
       </ul>
     </aside>
@@ -1253,6 +1397,31 @@
       <!-- 3. PAYMENTS -->
       <section id="student-payments">
         <div class="title"><div><small>ACCOUNT & PAYMENTS</small><h2>Fees & Payments</h2></div></div>
+
+        <!-- Month-wise Fee Dues Card (FIFO allocation) -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3>🗓️ Month-wise Fee Dues</h3>
+            <small style="color:#64748b;">Verified payments are applied to the oldest outstanding month first.</small>
+          </div>
+          <table style="margin-bottom:0;">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Final Amount</th>
+                <th>Paid</th>
+                <th>Due</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="monthly-dues-tbody">
+              <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">Loading...</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; font-weight:700; font-size:15px; color:#b91c1c; margin-top:16px;">
+            Total Outstanding: <span id="monthly-dues-total-outstanding">₹0</span>
+          </div>
+        </div>
 
         <!-- Fee Summary Card -->
         <div class="card" style="margin-bottom: 20px;">
@@ -1410,7 +1579,45 @@
         </div>
       </section>
 
-      <!-- 6. LOGOUT -->
+      <!-- 6. SECURITY / CHANGE PASSWORD -->
+      <section id="student-security">
+        <div class="title"><div><small>ACCOUNT SECURITY</small><h2>Change Password</h2></div></div>
+        <div class="card form">
+          <h3>Update Your Login Password</h3>
+          <p class="form-subtext">
+            You sign in with your Roll Number, so no email is required. Verify your current password and set a new one below. Your new password takes effect immediately.
+          </p>
+          <form id="form-student-change-password">
+            <div class="input-group">
+              <label for="student-current-password">Current Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔑</span>
+                <input type="password" id="student-current-password" placeholder="Enter current password" required>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="student-new-password">New Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="student-new-password" placeholder="Minimum 6 characters" required minlength="6">
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="student-confirm-new-password">Confirm New Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✔️</span>
+                <input type="password" id="student-confirm-new-password" placeholder="Re-enter new password" required minlength="6">
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
+              </div>
+            </div>
+            <button type="submit" id="btn-submit-student-change-password" class="btn-primary">Update Password</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 7. LOGOUT -->
       <section id="student-logout">
         <div class="logout">
           <h2>Sign Out of Student Portal</h2>
@@ -1447,7 +1654,7 @@
 
   <!-- Modal: Confirm Month Finalization -->
   <div id="modal-confirm-finalize" class="modal-overlay" style="display: none;">
-    <div class="modal-content" style="max-width: 480px; border-top: 5px solid #059669;">
+    <div class="modal-card" style="max-width: 480px; border-top: 5px solid #059669;">
       <button type="button" id="btn-close-finalize-modal" class="modal-close">&times;</button>
       <h3 style="color:#065f46; margin-bottom:12px;">🗓️ Confirm Monthly Finalization</h3>
       <p id="finalize-confirm-message" style="font-size:14px; line-height:1.5; color:#334155; margin-bottom:20px;">
@@ -1460,7 +1667,55 @@
     </div>
   </div>
 
+  <!-- Modal: Published Bill Details -->
+  <div id="modal-published-bill-details" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 760px; border-top: 5px solid #1d4ed8;">
+      <div class="modal-header">
+        <h3 style="color:#1e40af;">🧾 Published Bill — <span id="published-bill-details-title">—</span></h3>
+        <button type="button" id="btn-close-published-bill-modal" class="modal-close">&times;</button>
+      </div>
+      <p class="modal-desc">Per-student finalized fee statements for this month. These are the immutable records students see in their portal.</p>
+      <div style="overflow-x:auto; max-height:50vh; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Roll No</th>
+              <th>Student</th>
+              <th>Rent (₹)</th>
+              <th>Mess (₹)</th>
+              <th>Total (₹)</th>
+              <th>Paid (₹)</th>
+              <th>Pending (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="published-bill-details-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-close-published-bill-details" class="btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Delete Published Bill -->
+  <div id="modal-confirm-delete-published" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 480px; border-top: 5px solid #dc2626;">
+      <button type="button" id="btn-close-delete-published-modal" class="modal-close">&times;</button>
+      <h3 style="color:#b91c1c; margin-bottom:12px;">🗑️ Delete Published Bill</h3>
+      <p id="delete-published-confirm-message" style="font-size:14px; line-height:1.5; color:#334155; margin-bottom:20px;">
+        This will permanently delete the published bill and unlock the month for editing.
+      </p>
+      <input type="hidden" id="delete-published-month-key">
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" id="btn-cancel-delete-published" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-proceed-delete-published" class="btn-primary" style="background:#dc2626;">Delete Bill</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Application Entry Point (already modulepreloaded in <head>) -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260920A"></script>
 </body>
 </html>

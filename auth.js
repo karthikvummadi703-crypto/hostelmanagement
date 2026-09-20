@@ -12,11 +12,17 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   doc, 
   getDoc, 
   setDoc, 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
   serverTimestamp 
-} from "./firebase-config.js";
+} from "./firebase-config.js?v=20260920A";
 
 // ============================================================
 // SIMULATION STORE (Awaiting Live Database Values from User)
@@ -526,7 +532,7 @@ class AdminAuthContext {
   async resetPassword(email) {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail) {
-      throw new Error("Please enter your registered admin email address.");
+      throw new Error("Please enter your email address.");
     }
 
     try {
@@ -543,6 +549,146 @@ class AdminAuthContext {
       let msg = err.message;
       if (err.code === "auth/user-not-found") {
         msg = "No registered admin account found with this email address.";
+      }
+      throw new Error(msg);
+    }
+  }
+
+  /**
+   * Student password change (NO email reset).
+   * Students authenticate with their Roll Number (admins provision roll-number credentials),
+   * so instead of an email reset link we re-authenticate the student with their current
+   * password and immediately set the new password in Firebase Authentication.
+   * Uses the isolated secondary Firebase app so any active session is never disturbed.
+   */
+  async changeStudentPassword(rollOrEmail, password, newPassword) {
+    const rawInput = (rollOrEmail || "").trim();
+    const lowerRaw = rawInput.toLowerCase();
+    if (!rawInput || !password) {
+      throw new Error("Please enter your roll number and current password.");
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters.");
+    }
+
+    // Candidate login emails, tried in priority order.
+    // App-provisioned students ALWAYS have auth email <roll>@hostel.local, regardless of
+    // any later edit to the display-only "email" profile field — so that goes first.
+    // The Firestore profile email is a fallback for accounts created in Firebase Console
+    // with a custom email.
+    const candidates = [];
+    if (lowerRaw.includes("@")) {
+      candidates.push(lowerRaw);
+    } else {
+      candidates.push(`${lowerRaw}@hostel.local`);
+      if (isLiveFirebase && db) {
+        try {
+          const q = query(collection(db, "students"), where("rollNo", "==", rawInput.toUpperCase()));
+          const snap = await getDocs(q);
+          let resolvedEmail = "";
+          snap.forEach(d => {
+            const s = d.data();
+            if (s.email && /@/.test(s.email)) resolvedEmail = s.email;
+          });
+          if (resolvedEmail) {
+            const profEmail = resolvedEmail.trim().toLowerCase();
+            if (profEmail && profEmail !== `${lowerRaw}@hostel.local`) candidates.push(profEmail);
+          }
+        } catch (lookupErr) {
+          console.warn("Could not resolve student email by roll number:", lookupErr);
+        }
+      }
+    }
+    const uniqueEmails = [...new Set(candidates.filter(e => /@/.test(e)))];
+
+    try {
+      if (isLiveFirebase && auth) {
+        const secAuth = await getSecondaryAuth();
+        if (!secAuth) {
+          throw new Error("Could not initialize authentication provider.");
+        }
+
+        // PRIMARY: the student is already signed in on the main auth instance
+        // (student portal). Re-authenticate that exact account — immune to any
+        // email-scheme mismatch, because the session already knows its own account.
+        const currentUser = auth.currentUser;
+        if (currentUser && (currentUser.email || "").toLowerCase()) {
+          const curEmail = currentUser.email.toLowerCase();
+          const matchesCurrent = uniqueEmails.some(e => e === curEmail) ||
+            (lowerRaw && !lowerRaw.includes("@") && curEmail === `${lowerRaw}@hostel.local`);
+          if (matchesCurrent) {
+            try {
+              await reauthenticateWithCredential(
+                currentUser,
+                EmailAuthProvider.credential(currentUser.email, password)
+              );
+              if (String(newPassword) !== String(password)) {
+                await updatePassword(currentUser, newPassword);
+              }
+              return String(newPassword) === String(password)
+                ? "Your new password matches your current password, so no update was needed."
+                : "Password updated successfully.";
+            } catch (reauthErr) {
+              throw reauthErr;
+            }
+          }
+        }
+
+        // FALLBACK: resolve the account from the provided Roll/Email via the
+        // isolated secondary app (login-page flow, or session without currentUser).
+        let lastErr = null;
+        let signedIn = false;
+        for (const email of uniqueEmails) {
+          try {
+            const cred = await signInWithEmailAndPassword(secAuth, email, password);
+            signedIn = true;
+            if (String(newPassword) !== String(password)) {
+              await updatePassword(cred.user, newPassword);
+            }
+            return String(newPassword) === String(password)
+              ? "Your new password matches your current password, so no update was needed."
+              : "Password updated successfully.";
+          } catch (candidateErr) {
+            lastErr = candidateErr;
+            // Release any partial secondary-auth session so the next
+            // candidate attempt starts clean.
+            try { await signOut(secAuth); } catch (_) {}
+          } finally {
+            // Never leave a student session lingering in the secondary app
+            try { await signOut(secAuth); } catch (cleanupErr) { /* ignore */ }
+          }
+        }
+        if (signedIn) {
+          // Signed in successfully but the password update itself failed
+          try { await signOut(secAuth); } catch (_) {}
+          throw lastErr || new Error("Could not update password. Please try again.");
+        }
+        console.error("[changeStudentPassword] All sign-in attempts failed. Tried emails:", uniqueEmails, "lastError:", lastErr);
+        throw lastErr || new Error("Invalid roll number or current password.");
+      } else {
+        const authUser = SIMULATED_AUTH_STORE[uniqueEmails[0]] || SIMULATED_AUTH_STORE[lowerRaw] || SIMULATED_AUTH_STORE[rawInput];
+        if (!authUser || authUser.password !== password) {
+          throw new Error("Invalid roll number or current password.");
+        }
+        // Update every store entry mapped to this account (roll key, email key, shared uid/email)
+        Object.keys(SIMULATED_AUTH_STORE).forEach(k => {
+          const entry = SIMULATED_AUTH_STORE[k];
+          if (k === uniqueEmails[0] || k === lowerRaw || k === rawInput || (entry && entry.email === authUser.email) || (entry && entry.uid === authUser.uid)) {
+            entry.password = newPassword;
+          }
+        });
+        return "Password updated successfully.";
+      }
+    } catch (err) {
+      let msg = err.message;
+      if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+        msg = "Invalid roll number or current password.";
+      } else if (err.code === "auth/weak-password") {
+        msg = "New password is too weak. Use at least 6 characters.";
+      } else if (err.code === "auth/requires-recent-login") {
+        msg = "Session expired. Please sign out and sign in again, then retry.";
+      } else if (err.code && !/^(auth|permission)/.test(String(err.code))) {
+        msg = `${err.message} (${err.code})`;
       }
       throw new Error(msg);
     }
