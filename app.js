@@ -514,7 +514,6 @@ function renderRooms() {
             <span style="font-size:11px;font-weight:700;">${occ}/${cap}</span>
           </div>
         </td>
-        <td>${escapeHtml(r.branchPreference || "All")}</td>
         <td><em class="${isFull ? 'red' : 'green'}">${isFull ? 'Full' : 'Available'}</em></td>
         <td>
           <button type="button" class="btn-delete-room" data-id="${r.id}" style="background:#fee2e2;color:#b91c1c;padding:5px 9px;font-size:11px;border-radius:6px;">Delete</button>
