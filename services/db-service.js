@@ -1,4 +1,4 @@
-﻿// services/db-service.js
+// services/db-service.js
 // Production-Grade Firestore Data Layer for Hostel Management System
 
 import { 
@@ -134,7 +134,7 @@ export const studentService = {
       }
 
       if (unallocatedOnly) {
-        students = students.filter(s => !s.roomNo || s.roomNo === "Unassigned" || s.roomNo === "â€”");
+        students = students.filter(s => !s.roomNo || s.roomNo === "Unassigned" || s.roomNo === "—");
       }
 
       if (search) {
@@ -180,7 +180,7 @@ export const studentService = {
    *  2. Purges payments, fee statements (finalizedFees) and complaints for the student
    *  3. Deletes the students/{uid} profile document
    *  4. Optionally deletes the Firebase Authentication login account too (requires the
-   *     student's current password â€” the client SDK can only delete the account it can
+   *     student's current password — the client SDK can only delete the account it can
    *     authenticate as). Returns { deleted, authDeleted }.
    */
   async deleteStudent(studentUid, { password = "" } = {}) {
@@ -695,9 +695,9 @@ export const messService = {
       return snap.data().messSchedule;
     }
     return {
-      breakfast: "07:30 AM â€“ 09:00 AM",
-      lunch: "12:30 PM â€“ 02:00 PM",
-      dinner: "07:30 PM â€“ 09:00 PM",
+      breakfast: "07:30 AM – 09:00 AM",
+      lunch: "12:30 PM – 02:00 PM",
+      dinner: "07:30 PM – 09:00 PM",
       menuToday: "Breakfast: Idli, Vada, Chutney | Lunch: Rice, Dal, Paneer | Dinner: Roti, Veg Pulao"
     };
   },
@@ -784,7 +784,7 @@ export const paymentService = {
       rollNo,
       amount: numAmount,
       transactionId: cleanUTR,
-      utrNumber: cleanUTR, // Unified field â€” both admin and student use this
+      utrNumber: cleanUTR, // Unified field — both admin and student use this
       billingMonth: billingMonth || new Date().toISOString().slice(0, 7),
       source: "admin",   // "admin" | "student"
       status: "Verified", // Admin-recorded payments are pre-verified
@@ -817,7 +817,7 @@ export const paymentService = {
 
   /**
    * Admin verifies a student-submitted UTR payment.
-   * Uses a Firestore transaction to guarantee atomic readâ†’write.
+   * Uses a Firestore transaction to guarantee atomic read→write.
    * All reads must happen BEFORE any writes.
    */
   async verifyPayment(paymentId, studentUid, amount, adminEmail = "", notes = "") {
@@ -867,7 +867,7 @@ export const paymentService = {
 
   /**
    * Admin rejects a student-submitted payment with a mandatory reason.
-   * This does NOT update fee balance â€” the payment was not accepted.
+   * This does NOT update fee balance — the payment was not accepted.
    */
   async rejectPayment(paymentId, adminEmail = "", reason = "Payment could not be verified") {
     if (!paymentId) throw new Error("Payment ID is required.");
@@ -1553,7 +1553,7 @@ export const studentPortalService = {
    * Computes month-wise outstanding fee dues for a student with FIFO payment allocation.
    * Uses ONLY published/finalized monthly fee records and ONLY verified/approved payments.
    * Verified payments are allocated to the OLDEST outstanding month first.
-   * Deterministic â€” computed live from stored records, so page refreshes never alter,
+   * Deterministic — computed live from stored records, so page refreshes never alter,
    * double-allocate, or duplicate a payment. Nothing is persisted.
    */
   async getMonthlyFeeDues(studentUid, hostelId) {
@@ -1650,7 +1650,7 @@ export const studentPortalService = {
     const numAmount = parseFloat(amount) || 0;
     if (numAmount <= 0) throw new Error("Payment amount must be greater than zero.");
 
-    // Duplicate UTR guard â€” prevents the same receipt being submitted twice
+    // Duplicate UTR guard — prevents the same receipt being submitted twice
     const isDuplicate = await paymentService.checkDuplicateUTR(hostelId, cleanUTR);
     if (isDuplicate) throw new Error(`UTR "${cleanUTR}" has already been submitted. Contact the warden if this is an error.`);
 
@@ -1671,7 +1671,7 @@ export const studentPortalService = {
       rollNo: rollNo || "",
       amount: numAmount,
       utrNumber: cleanUTR,
-      transactionId: cleanUTR, // Unified field â€” admin ledger uses this too
+      transactionId: cleanUTR, // Unified field — admin ledger uses this too
       date: paymentDate || new Date().toISOString().slice(0, 10),
       billingMonth: billingMonth || new Date().toISOString().slice(0, 7),
       remarks: (remarks || "Fee Payment").trim(),

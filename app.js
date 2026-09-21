@@ -1,4 +1,4 @@
-﻿// app.js
+// app.js
 // Production Full-Stack Controller for Hostel Management System
 // Build v20260921B (cache-busted module imports)
 
@@ -31,7 +31,7 @@ export function showToast(message, type = "info") {
 
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  const icon = type === "success" ? "âœ“" : type === "error" ? "âš ï¸" : "â„¹ï¸";
+  const icon = type === "success" ? "✓" : type === "error" ? "⚠️" : "ℹ️";
   toast.innerHTML = `<span>${icon}</span> <div>${escapeHtml(message)}</div>`;
   
   container.appendChild(toast);
@@ -67,7 +67,7 @@ let payFilterState = {
   month: ""      // YYYY-MM or empty
 };
 
-// Cached DOM references â€” avoid repeated getElementById on every render cycle
+// Cached DOM references — avoid repeated getElementById on every render cycle
 const DOM = {};
 function cacheDOM() {
   DOM.loginView = document.getElementById("view-login");
@@ -93,13 +93,13 @@ async function renderState(authState) {
   const { currentAdmin, currentHostel, loading, loadingHostel, error } = authState;
 
   // Only show the loading overlay when an authenticated user's data is being fetched.
-  // Never show it during the initial unauthenticated page load â€” login must be visible immediately.
+  // Never show it during the initial unauthenticated page load — login must be visible immediately.
   if (DOM.loadingOverlay) {
     const showOverlay = loading && currentAdmin !== null;
     DOM.loadingOverlay.style.display = showOverlay ? "flex" : "none";
   }
 
-  // Unauthenticated â€” always show login page immediately
+  // Unauthenticated — always show login page immediately
   if (!currentAdmin) {
     if (DOM.loginView) DOM.loginView.style.display = "flex";
     if (DOM.adminView) DOM.adminView.style.display = "none";
@@ -141,7 +141,7 @@ async function renderState(authState) {
   } else if (currentHostel) {
     const hostelHtml = `
       <div class="hostel-badge-content">
-        <span class="hostel-icon">ðŸ </span>
+        <span class="hostel-icon">🏠</span>
         <span class="hostel-title">${escapeHtml(currentHostel.name)}</span>
         ${currentHostel.code ? `<span class="hostel-code">${escapeHtml(currentHostel.code)}</span>` : ""}
       </div>
@@ -150,7 +150,7 @@ async function renderState(authState) {
     if (DOM.dashboardHostelEl) {
       DOM.dashboardHostelEl.innerHTML = `
         <div class="welcome-hostel-badge">
-          <span class="hostel-icon">ðŸ </span>
+          <span class="hostel-icon">🏠</span>
           <span class="hostel-main-name">${escapeHtml(currentHostel.name)}</span>
           <span class="hostel-status-pill">Active Hostel</span>
         </div>
@@ -273,8 +273,8 @@ function handleDashboardSearch() {
 
   resultsContainer.innerHTML = matches.map(s => `
     <div class="result">
-      <b>${escapeHtml(s.rollNo)} â€” ${escapeHtml(s.name)}</b>
-      <span>${escapeHtml(s.branchName || "CSE")} Â· Room: ${s.roomNo && s.roomNo !== "Unassigned" ? escapeHtml(s.roomNo) : "Pending"} Â· Fee Remaining: â‚¹${(s.feeRemaining || 0).toLocaleString()}</span>
+      <b>${escapeHtml(s.rollNo)} — ${escapeHtml(s.name)}</b>
+      <span>${escapeHtml(s.branchName || "CSE")} · Room: ${s.roomNo && s.roomNo !== "Unassigned" ? escapeHtml(s.roomNo) : "Pending"} · Fee Remaining: ₹${(s.feeRemaining || 0).toLocaleString()}</span>
       <button type="button" onclick="location.hash='#students'">View in Directory</button>
     </div>
   `).join("");
@@ -320,7 +320,7 @@ function renderStudents() {
           ? `<b style="color:var(--primary);">Room ${escapeHtml(s.roomNo)}</b>` 
           : `<span style="color:#94a3b8;">Pending</span>`}
       </td>
-      <td>â‚¹${(s.feeRemaining || 0).toLocaleString()}</td>
+      <td>₹${(s.feeRemaining || 0).toLocaleString()}</td>
       <td><em class="${s.status === 'active' ? 'green' : 'red'}">${s.status === 'active' ? 'Active' : 'Inactive'}</em></td>
       <td>
         <div style="display:flex;gap:6px;">
@@ -406,7 +406,7 @@ function renderStudents() {
         if (result.authDeleted) {
           showToast(`Student "${name}" deleted. Login credentials removed too.`, "success");
         } else {
-          showToast(`Student "${name}" deleted. Login credential was not removed (no/incorrect password) â€” delete it in the Firebase Console to fully revoke access.`, "warning");
+          showToast(`Student "${name}" deleted. Login credential was not removed (no/incorrect password) — delete it in the Firebase Console to fully revoke access.`, "warning");
         }
         await refreshAllData(adminAuthContext.currentAdmin.hostelId);
       } catch (err) {
@@ -424,7 +424,7 @@ function populateStudentDropdowns() {
   const paySelect = document.getElementById("record-payment-student-select");
 
   const optionsHtml = '<option value="">Select student...</option>' + 
-    appState.students.map(s => `<option value="${s.uid}">${escapeHtml(s.rollNo)} â€” ${escapeHtml(s.name)}</option>`).join("");
+    appState.students.map(s => `<option value="${s.uid}">${escapeHtml(s.rollNo)} — ${escapeHtml(s.name)}</option>`).join("");
 
   if (calcSelect) calcSelect.innerHTML = optionsHtml;
   if (paySelect) paySelect.innerHTML = optionsHtml;
@@ -540,7 +540,7 @@ function renderRooms() {
 
 // ============================================================
 // ============================================================
-// 5. ALLOTMENT PAGE â€” PREMIUM REDESIGN MODULE
+// 5. ALLOTMENT PAGE — PREMIUM REDESIGN MODULE
 // ============================================================
 
 // Internal state for the allotment page
@@ -554,7 +554,7 @@ const allotState = {
   filterYear: '',
 };
 
-// Fisherâ€“Yates shuffle â€” returns a new array with elements in random order.
+// Fisher–Yates shuffle — returns a new array with elements in random order.
 function shuffleArray(input) {
   const arr = [...(input || [])];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -602,7 +602,7 @@ function renderAllocationList() {
 
   const rooms = appState.rooms || [];
   const allotted = (appState.students || []).filter(s =>
-    s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== 'â€”'
+    s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== '—'
   );
 
   if (countEl) countEl.textContent = `${allotted.length} allocated`;
@@ -619,12 +619,12 @@ function renderAllocationList() {
   tbody.innerHTML = sorted.map(s => {
     const room = rooms.find(r => (s.roomId && r.id === s.roomId) || String(r.roomNo) === String(s.roomNo));
     return `<tr>
-      <td><b>${escapeHtml(s.rollNo || 'â€”')}</b></td>
-      <td>${escapeHtml(s.name || 'â€”')}</td>
-      <td>${escapeHtml(s.branchName || s.branchId || 'â€”')}</td>
-      <td>${escapeHtml(s.year || 'â€”')}</td>
+      <td><b>${escapeHtml(s.rollNo || '—')}</b></td>
+      <td>${escapeHtml(s.name || '—')}</td>
+      <td>${escapeHtml(s.branchName || s.branchId || '—')}</td>
+      <td>${escapeHtml(s.year || '—')}</td>
       <td><b>Room ${escapeHtml(s.roomNo)}</b></td>
-      <td>${escapeHtml(room && room.floor ? room.floor : 'â€”')}</td>
+      <td>${escapeHtml(room && room.floor ? room.floor : '—')}</td>
     </tr>`;
   }).join('');
 }
@@ -657,7 +657,7 @@ function renderBranchFilter() {
   if (!sel) return;
   const branches = appState.branches || [];
   sel.innerHTML = '<option value="">All Branches</option>' +
-    branches.map(b => `<option value="${escapeHtml(b.name || b.code)}">${escapeHtml(b.code)} â€” ${escapeHtml(b.name)}</option>`).join('');
+    branches.map(b => `<option value="${escapeHtml(b.name || b.code)}">${escapeHtml(b.code)} — ${escapeHtml(b.name)}</option>`).join('');
   sel.value = allotState.filterBranch;
 }
 
@@ -713,18 +713,18 @@ function renderStudentPanel() {
   if (!container) return;
   const students = getFilteredStudents();
   if (students.length === 0) {
-    container.innerHTML = `<div class="allot-empty-state"><div class="allot-empty-icon">ðŸ‘¤</div><p>${(allotState.searchStudent || allotState.filterBranch) ? 'No matching students found.' : 'No eligible students available.'}</p></div>`;
+    container.innerHTML = `<div class="allot-empty-state"><div class="allot-empty-icon">👤</div><p>${(allotState.searchStudent || allotState.filterBranch) ? 'No matching students found.' : 'No eligible students available.'}</p></div>`;
     updateAllotmentSummary();
     return;
   }
   container.innerHTML = students.map(s => {
-    const isAllotted = s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== 'â€”';
+    const isAllotted = s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== '—';
     const isSelected = allotState.selectedStudentUids.has(s.uid || s.id);
-    const branch = escapeHtml(s.branchName || s.branchId || 'â€”');
-    const year = s.year ? ` â€¢ ${escapeHtml(s.year)} Year` : '';
+    const branch = escapeHtml(s.branchName || s.branchId || '—');
+    const year = s.year ? ` • ${escapeHtml(s.year)} Year` : '';
     return `<div class="student-row ${isSelected ? 'selected' : ''} ${isAllotted ? 'allotted' : ''}" data-uid="${escapeHtml(s.uid || s.id)}" data-allotted="${isAllotted ? '1' : '0'}" ${isAllotted ? 'title="Already allotted"' : ''}>
-      <div class="student-row-check">${isAllotted ? '<span class="allotted-dot">âœ“</span>' : `<input type="checkbox" class="allot-student-cb" ${isSelected ? 'checked' : ''} />`}</div>
-      <div class="student-row-info"><strong>${escapeHtml(s.rollNo || 'N/A')}</strong><span>${escapeHtml(s.name || s.rollNo || '')} â€¢ ${branch}${year}</span></div>
+      <div class="student-row-check">${isAllotted ? '<span class="allotted-dot">✓</span>' : `<input type="checkbox" class="allot-student-cb" ${isSelected ? 'checked' : ''} />`}</div>
+      <div class="student-row-info"><strong>${escapeHtml(s.rollNo || 'N/A')}</strong><span>${escapeHtml(s.name || s.rollNo || '')} • ${branch}${year}</span></div>
       <div class="student-row-status">${isAllotted ? `<span class="allot-badge allot-badge-green">Allotted<br/><small>${escapeHtml(s.roomNo)}</small></span>` : '<span class="allot-badge allot-badge-amber">Not Allotted</span>'}</div>
     </div>`;
   }).join('');
@@ -741,7 +741,7 @@ function renderRoomGrid() {
   if (!container) return;
   const rooms = getFilteredRooms();
   if (rooms.length === 0) {
-    container.innerHTML = `<div class="allot-empty-state" style="grid-column:1/-1"><div class="allot-empty-icon">ðŸ </div><p>${(allotState.searchRoom || allotState.filterFloor) ? 'No matching rooms found.' : 'No rooms available.'}</p></div>`;
+    container.innerHTML = `<div class="allot-empty-state" style="grid-column:1/-1"><div class="allot-empty-icon">🏠</div><p>${(allotState.searchRoom || allotState.filterFloor) ? 'No matching rooms found.' : 'No rooms available.'}</p></div>`;
     return;
   }
   container.innerHTML = rooms.map(r => {
@@ -761,7 +761,7 @@ function renderRoomGrid() {
       : '<span class="room-occupant-empty">Empty room</span>';
     return `<div class="room-card ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}" data-room-id="${escapeHtml(r.id)}" data-available="${avail}">
       <div class="room-card-top"><div class="room-card-number">Room ${escapeHtml(r.roomNo)}</div><span class="room-status-badge ${statusClass}">${statusLabel}</span></div>
-      <div class="room-card-floor">Floor ${escapeHtml(r.floor || 'â€”')}</div>
+      <div class="room-card-floor">Floor ${escapeHtml(r.floor || '—')}</div>
       <div class="room-card-stats">
         <div><span>${cap}</span><label>Capacity</label></div>
         <div><span>${occ}</span><label>Occupied</label></div>
@@ -769,7 +769,7 @@ function renderRoomGrid() {
       </div>
       <div class="room-bed-dots">${dots}</div>
       <div class="room-card-occupants"><span class="room-occupants-label">Occupants</span>${occupantsHtml}</div>
-      ${!isFull ? `<button type="button" class="room-select-btn ${isSelected ? 'selected' : ''}">${isSelected ? 'âœ“ Selected' : 'Select Room'}</button>` : '<div class="room-full-label">FULL â€” Cannot Select</div>'}
+      ${!isFull ? `<button type="button" class="room-select-btn ${isSelected ? 'selected' : ''}">${isSelected ? '✓ Selected' : 'Select Room'}</button>` : '<div class="room-full-label">FULL — Cannot Select</div>'}
     </div>`;
   }).join('');
   container.querySelectorAll('.room-card:not(.full)').forEach(card => {
@@ -798,7 +798,7 @@ function selectAllByBranch(branchName, branchCode, activate) {
   (appState.students || []).forEach(s => {
     const sb = s.branchName || s.branchId || '';
     const match = sb === branchName || (branchCode && sb.toUpperCase() === branchCode.toUpperCase());
-    const isAllotted = s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== 'â€”';
+    const isAllotted = s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== '—';
     if (match && !isAllotted) {
       const uid = s.uid || s.id;
       if (activate) allotState.selectedStudentUids.add(uid);
@@ -818,7 +818,7 @@ function toggleRoomCard(roomId) {
     const isSel = allotState.selectedRoomIds.has(roomId);
     card.classList.toggle('selected', isSel);
     const btn = card.querySelector('.room-select-btn');
-    if (btn) { btn.textContent = isSel ? 'âœ“ Selected' : 'Select Room'; btn.classList.toggle('selected', isSel); }
+    if (btn) { btn.textContent = isSel ? '✓ Selected' : 'Select Room'; btn.classList.toggle('selected', isSel); }
   }
   // Update room count badge
   const rc = document.getElementById('allot-selected-room-count');
@@ -846,9 +846,9 @@ function updateAllotmentSummary() {
   if (statR) statR.textContent = roomCount;
   let canAllot = false;
   if (studentCount === 0) { if (statusEl) statusEl.innerHTML = ''; }
-  else if (roomCount === 0) { if (statusEl) statusEl.innerHTML = '<span class="capacity-warn">âš  Select at least one room</span>'; }
-  else if (studentCount > availableBeds) { if (statusEl) statusEl.innerHTML = `<span class="capacity-warn">âš  Not enough beds â€” ${studentCount} students, ${availableBeds} available</span>`; }
-  else { if (statusEl) statusEl.innerHTML = `<span class="capacity-ok">âœ“ Capacity available â€” ${availableBeds - studentCount} beds remaining</span>`; canAllot = true; }
+  else if (roomCount === 0) { if (statusEl) statusEl.innerHTML = '<span class="capacity-warn">⚠ Select at least one room</span>'; }
+  else if (studentCount > availableBeds) { if (statusEl) statusEl.innerHTML = `<span class="capacity-warn">⚠ Not enough beds — ${studentCount} students, ${availableBeds} available</span>`; }
+  else { if (statusEl) statusEl.innerHTML = `<span class="capacity-ok">✓ Capacity available — ${availableBeds - studentCount} beds remaining</span>`; canAllot = true; }
   if (allotBtn) { allotBtn.disabled = !canAllot; }
 }
 
@@ -876,7 +876,7 @@ async function confirmAllotment() {
   const btn = document.getElementById('btn-allot-confirm');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Allocating...'; }
   // Randomise both the student order and the room order so allocation is not
-  // performed in a fixed row-wise sequence (Fisherâ€“Yates shuffle).
+  // performed in a fixed row-wise sequence (Fisher–Yates shuffle).
   const studentUids = shuffleArray([...allotState.selectedStudentUids]);
   const roomIds = [...allotState.selectedRoomIds];
   try {
@@ -892,7 +892,7 @@ async function confirmAllotment() {
       bl--;
     }
     document.getElementById('allot-confirm-modal').style.display = 'none';
-    showToast(`âœ“ ${studentUids.length} student(s) successfully allotted!`, 'success');
+    showToast(`✓ ${studentUids.length} student(s) successfully allotted!`, 'success');
     allotState.selectedStudentUids = new Set();
     allotState.selectedRoomIds = new Set();
     await refreshAllData(adminAuthContext.currentAdmin.hostelId);
@@ -913,12 +913,12 @@ async function confirmReallocation() {
   try {
     const res = await allotmentService.reallocateAll(adminAuthContext.currentAdmin.hostelId);
     document.getElementById('reallot-confirm-modal').style.display = 'none';
-    showToast(`âœ“ Reallocated ${res.allocated} of ${res.total} students!`, 'success');
+    showToast(`✓ Reallocated ${res.allocated} of ${res.total} students!`, 'success');
     await refreshAllData(adminAuthContext.currentAdmin.hostelId);
   } catch (err) {
     showToast(err.message || 'Reallocation failed. Please try again.', 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Continue â€” Reallocate'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Continue — Reallocate'; }
   }
 }
 
@@ -952,7 +952,7 @@ async function fetchAttendanceHistory() {
   const absentCount = totalStudents - presentCount;
 
   if (header) {
-    header.textContent = `ðŸ“Š Attendance Record for ${meal} (${dateStr}): ${presentCount} Present / ${absentCount} Absent (Total ${totalStudents})`;
+    header.textContent = `📊 Attendance Record for ${meal} (${dateStr}): ${presentCount} Present / ${absentCount} Absent (Total ${totalStudents})`;
     header.style.display = "block";
   }
 
@@ -972,11 +972,11 @@ async function fetchAttendanceHistory() {
         <td>Room ${escapeHtml(s.roomNo || "Pending")}</td>
         <td>
           <b style="color: ${isPresent ? '#16a34a' : '#dc2626'}; font-size:12px;">
-            ${isPresent ? 'âœ“ Present' : 'âœ— Absent'}
+            ${isPresent ? '✓ Present' : '✗ Absent'}
           </b>
         </td>
         <td>${escapeHtml(meal)}</td>
-        <td><b>â‚¹${itemCost}</b></td>
+        <td><b>₹${itemCost}</b></td>
       </tr>
     `;
   }).join("");
@@ -1013,7 +1013,7 @@ function renderCustomMealChips() {
   container.innerHTML = currentCustomMeals.map((item, index) => `
     <div class="branch-chip-item" style="display:inline-flex;align-items:center;gap:8px;background:#e2e8f0;padding:6px 12px;border-radius:6px;margin-right:6px;margin-bottom:6px;">
       <b style="color:var(--primary);font-size:12px;">${escapeHtml(item.name)}</b>
-      <span style="font-size:11px;color:#16a34a;font-weight:700;">â‚¹${item.price}</span>
+      <span style="font-size:11px;color:#16a34a;font-weight:700;">₹${item.price}</span>
       <button type="button" class="btn-remove-custom-item" data-index="${index}" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;" title="Remove Item">&times;</button>
     </div>
   `).join("");
@@ -1033,12 +1033,12 @@ function populateMealDropdowns() {
   const historySelect = document.getElementById("history-attendance-meal");
 
   const standardOpts = `
-    <option value="Breakfast">ðŸŒ… Breakfast</option>
-    <option value="Lunch">â˜€ï¸ Lunch</option>
-    <option value="Dinner">ðŸŒ™ Dinner</option>
+    <option value="Breakfast">🌅 Breakfast</option>
+    <option value="Lunch">☀️ Lunch</option>
+    <option value="Dinner">🌙 Dinner</option>
   `;
 
-  const customOpts = currentCustomMeals.map(m => `<option value="${escapeHtml(m.name)}">â˜• ${escapeHtml(m.name)} (â‚¹${m.price})</option>`).join("");
+  const customOpts = currentCustomMeals.map(m => `<option value="${escapeHtml(m.name)}">☕ ${escapeHtml(m.name)} (₹${m.price})</option>`).join("");
   const fullOpts = standardOpts + customOpts;
 
   if (markSelect) {
@@ -1077,7 +1077,7 @@ async function loadAttendanceRoster() {
     saveBtn.disabled = isLocked;
     saveBtn.style.opacity = isLocked ? "0.5" : "1";
     saveBtn.style.cursor = isLocked ? "not-allowed" : "pointer";
-    saveBtn.textContent = isLocked ? "ðŸ”’ Month Finalized (Locked)" : "Save Daily Attendance";
+    saveBtn.textContent = isLocked ? "🔒 Month Finalized (Locked)" : "Save Daily Attendance";
   }
 
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8;">Loading roster...</td></tr>';
@@ -1134,13 +1134,13 @@ async function loadPublishedBills() {
         <tr>
           <td><b>${escapeHtml(formatPublishedMonthLabel(m.monthKey))}</b></td>
           <td>${t.students}</td>
-          <td>â‚¹${Number(t.billed).toLocaleString()}</td>
-          <td style="color:#15803d;">â‚¹${Number(t.paid).toLocaleString()}</td>
-          <td style="color:#b45309;">â‚¹${Number(t.pending).toLocaleString()}</td>
+          <td>₹${Number(t.billed).toLocaleString()}</td>
+          <td style="color:#15803d;">₹${Number(t.paid).toLocaleString()}</td>
+          <td style="color:#b45309;">₹${Number(t.pending).toLocaleString()}</td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button type="button" class="btn-view-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#dbeafe;color:#1d4ed8;">ðŸ‘ View</button>
-              <button type="button" class="btn-delete-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#fee2e2;color:#b91c1c;">ðŸ—‘ Delete</button>
+              <button type="button" class="btn-view-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#dbeafe;color:#1d4ed8;">👁 View</button>
+              <button type="button" class="btn-delete-published" data-month="${escapeHtml(m.monthKey)}" style="font-size:11px;padding:4px 10px;background:#fee2e2;color:#b91c1c;">🗑 Delete</button>
             </div>
           </td>
         </tr>
@@ -1172,11 +1172,11 @@ async function openPublishedBillDetails(monthKey) {
         <tr>
           <td><b>${escapeHtml(r.rollNo || "")}</b></td>
           <td>${escapeHtml(r.studentName || "")}</td>
-          <td>â‚¹${Number(r.monthlyRent || 0).toLocaleString()}</td>
-          <td>â‚¹${Number(mess).toLocaleString()}</td>
-          <td>â‚¹${Number(r.totalAmount || 0).toLocaleString()}</td>
-          <td style="color:#15803d;">â‚¹${Number(r.paidAmount || 0).toLocaleString()}</td>
-          <td style="color:#b45309;">â‚¹${Number(r.pendingAmount || 0).toLocaleString()}</td>
+          <td>₹${Number(r.monthlyRent || 0).toLocaleString()}</td>
+          <td>₹${Number(mess).toLocaleString()}</td>
+          <td>₹${Number(r.totalAmount || 0).toLocaleString()}</td>
+          <td style="color:#15803d;">₹${Number(r.paidAmount || 0).toLocaleString()}</td>
+          <td style="color:#b45309;">₹${Number(r.pendingAmount || 0).toLocaleString()}</td>
         </tr>
       `;
     }).join("");
@@ -1215,7 +1215,7 @@ function renderComplaints() {
             ${c.status === 'Pending' ? `<button type="button" class="btn-complaint-prog" data-id="${c.id}" style="font-size:11px;padding:4px 8px;background:#dbeafe;color:#1d4ed8;">In Progress</button>` : ""}
             <button type="button" class="btn-complaint-resolve" data-id="${c.id}" style="font-size:11px;padding:4px 8px;background:#dcfce7;color:#15803d;">Resolve</button>
           </div>
-        ` : `<span style="font-size:11px;color:#15803d;font-weight:700;">âœ“ Resolved</span>`}
+        ` : `<span style="font-size:11px;color:#15803d;font-weight:700;">✓ Resolved</span>`}
       </td>
     </tr>
   `).join("");
@@ -1302,17 +1302,17 @@ function renderMessTimetable() {
   const bfDisp = document.getElementById("display-mess-bf");
   const luDisp = document.getElementById("display-mess-lu");
   const diDisp = document.getElementById("display-mess-di");
-  if (bfDisp) bfDisp.textContent = schedule.breakfast || "07:30 AM â€“ 09:00 AM";
-  if (luDisp) luDisp.textContent = schedule.lunch || "12:30 PM â€“ 02:00 PM";
-  if (diDisp) diDisp.textContent = schedule.dinner || "07:30 PM â€“ 09:00 PM";
+  if (bfDisp) bfDisp.textContent = schedule.breakfast || "07:30 AM – 09:00 AM";
+  if (luDisp) luDisp.textContent = schedule.lunch || "12:30 PM – 02:00 PM";
+  if (diDisp) diDisp.textContent = schedule.dinner || "07:30 PM – 09:00 PM";
 
   const bfInput = document.getElementById("mess-timing-breakfast");
   const luInput = document.getElementById("mess-timing-lunch");
   const diInput = document.getElementById("mess-timing-dinner");
   const menuInput = document.getElementById("mess-menu-today");
-  if (bfInput) bfInput.value = schedule.breakfast || "07:30 AM â€“ 09:00 AM";
-  if (luInput) luInput.value = schedule.lunch || "12:30 PM â€“ 02:00 PM";
-  if (diInput) diInput.value = schedule.dinner || "07:30 PM â€“ 09:00 PM";
+  if (bfInput) bfInput.value = schedule.breakfast || "07:30 AM – 09:00 AM";
+  if (luInput) luInput.value = schedule.lunch || "12:30 PM – 02:00 PM";
+  if (diInput) diInput.value = schedule.dinner || "07:30 PM – 09:00 PM";
   if (menuInput && schedule.menuToday) menuInput.value = schedule.menuToday;
 
   const weeklyTbody = document.getElementById("mess-weekly-timetable-tbody");
@@ -1374,7 +1374,7 @@ function renderPayments() {
   const statPending = document.getElementById("pay-stat-pending");
   const statVerified = document.getElementById("pay-stat-verified");
   const statRejected = document.getElementById("pay-stat-rejected");
-  if (statCollected) statCollected.textContent = `â‚¹${totalCollected.toLocaleString()}`;
+  if (statCollected) statCollected.textContent = `₹${totalCollected.toLocaleString()}`;
   if (statPending) statPending.textContent = pendingCount;
   if (statVerified) statVerified.textContent = verifiedCount;
   if (statRejected) statRejected.textContent = rejectedCount;
@@ -1399,15 +1399,15 @@ function renderPayments() {
   const adminEmail = adminAuthContext.currentAdmin?.email || "admin";
 
   tbody.innerHTML = filtered.map(p => {
-    const utr = escapeHtml(p.utrNumber || p.transactionId || "â€”");
+    const utr = escapeHtml(p.utrNumber || p.transactionId || "—");
     const status = p.status || "Pending";
     const source = p.source === "student" ? "<em class='blue'>Student</em>" : "<em class='green'>Admin</em>";
-    const dateStr = p.date || (p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : "â€”");
-    const billingMonth = escapeHtml(p.billingMonth || "â€”");
+    const dateStr = p.date || (p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : "—");
+    const billingMonth = escapeHtml(p.billingMonth || "—");
     let statusBadge = "";
-    if (status === "Verified") statusBadge = `<em class="green">âœ… Verified</em>`;
-    else if (status === "Rejected") statusBadge = `<em class="red">âŒ Rejected</em>`;
-    else statusBadge = `<em class="yellow">â³ ${escapeHtml(status)}</em>`;
+    if (status === "Verified") statusBadge = `<em class="green">✅ Verified</em>`;
+    else if (status === "Rejected") statusBadge = `<em class="red">❌ Rejected</em>`;
+    else statusBadge = `<em class="yellow">⏳ ${escapeHtml(status)}</em>`;
 
     let actionHtml = "";
     if (status !== "Verified" && status !== "Rejected") {
@@ -1416,21 +1416,21 @@ function renderPayments() {
           <button type="button" class="btn-verify-pay pay-action-btn pay-verify-btn"
             data-id="${p.id}" data-uid="${p.studentUid || p.studentId || ''}" data-amount="${p.amount}"
             title="Verify this payment">
-            âœ… Verify
+            ✅ Verify
           </button>
           <button type="button" class="btn-reject-pay pay-action-btn pay-reject-btn"
             data-id="${p.id}"
             data-student="${escapeHtml(p.studentName || p.rollNo || 'Student')}"
-            data-amount="â‚¹${Number(p.amount) || 0}"
+            data-amount="₹${Number(p.amount) || 0}"
             data-utr="${utr}"
             title="Reject this payment">
-            âŒ Reject
+            ❌ Reject
           </button>
         </div>`;
     } else if (status === "Verified") {
-      actionHtml = `<span style="font-size:11px;color:#15803d;font-weight:700;">âœ“ Done</span>`;
+      actionHtml = `<span style="font-size:11px;color:#15803d;font-weight:700;">✓ Done</span>`;
     } else {
-      actionHtml = `<span style="font-size:11px;color:#b91c1c;font-weight:700;" title="${escapeHtml(p.rejectionReason || '')}">âœ— Rejected</span>`;
+      actionHtml = `<span style="font-size:11px;color:#b91c1c;font-weight:700;" title="${escapeHtml(p.rejectionReason || '')}">✗ Rejected</span>`;
     }
 
     // Color-code row border by status
@@ -1441,9 +1441,9 @@ function renderPayments() {
     return `
       <tr style="${rowStyle}">
         <td>${dateStr}</td>
-        <td><b>${escapeHtml(p.studentName || 'â€”')}</b></td>
-        <td>${escapeHtml(p.rollNo || 'â€”')}</td>
-        <td><b>â‚¹${(Number(p.amount) || 0).toLocaleString()}</b></td>
+        <td><b>${escapeHtml(p.studentName || '—')}</b></td>
+        <td>${escapeHtml(p.rollNo || '—')}</td>
+        <td><b>₹${(Number(p.amount) || 0).toLocaleString()}</b></td>
         <td>${utr}</td>
         <td>${billingMonth}</td>
         <td>${source}</td>
@@ -1587,7 +1587,7 @@ function setupEvents() {
     togglePassBtn.addEventListener("click", () => {
       const isPass = loginPassInput.type === "password";
       loginPassInput.type = isPass ? "text" : "password";
-      togglePassBtn.textContent = isPass ? "ðŸ™ˆ" : "ðŸ‘ï¸";
+      togglePassBtn.textContent = isPass ? "🙈" : "👁️";
     });
   }
 
@@ -1598,7 +1598,7 @@ function setupEvents() {
       if (!input || !input.tagName || input.tagName.toLowerCase() !== "input") return;
       const isPass = input.type === "password";
       input.type = isPass ? "text" : "password";
-      btn.textContent = isPass ? "ðŸ™ˆ" : "ðŸ‘ï¸";
+      btn.textContent = isPass ? "🙈" : "👁️";
     });
   });
 
@@ -1755,7 +1755,7 @@ function setupEvents() {
         if (forgotLink) forgotLink.textContent = "Change Password";
         const rollInput = document.getElementById("forgot-student-roll");
         if (rollInput) rollInput.value = email;
-        showToast("That's a student account â€” showing the student security form.", "info");
+        showToast("That's a student account — showing the student security form.", "info");
         return;
       }
       btn.disabled = true;
@@ -1919,7 +1919,7 @@ function setupEvents() {
     });
   }
 
-  // 10. ALLOTMENT PAGE â€” New Event Bindings
+  // 10. ALLOTMENT PAGE — New Event Bindings
   const allotStudentSearch = document.getElementById('allot-student-search');
   if (allotStudentSearch) allotStudentSearch.addEventListener('input', (e) => { allotState.searchStudent = e.target.value; renderStudentPanel(); });
 
@@ -1937,7 +1937,7 @@ function setupEvents() {
 
   const selectAllBtn = document.getElementById('allot-select-all-visible');
   if (selectAllBtn) selectAllBtn.addEventListener('click', () => {
-    const visible = getFilteredStudents().filter(s => !(s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== 'â€”'));
+    const visible = getFilteredStudents().filter(s => !(s.roomNo && s.roomNo !== 'Unassigned' && s.roomNo !== '—'));
     const allSel = visible.every(s => allotState.selectedStudentUids.has(s.uid || s.id));
     visible.forEach(s => { if (allSel) allotState.selectedStudentUids.delete(s.uid || s.id); else allotState.selectedStudentUids.add(s.uid || s.id); });
     renderStudentPanel();
@@ -2065,10 +2065,10 @@ function setupEvents() {
     const mVal = finalizeMonthSelect.value;
     const isFin = await attendanceService.isMonthFinalized(adminAuthContext.currentAdmin.hostelId, mVal);
     if (isFin) {
-      finalizeStatusInfo.innerHTML = `Status: <span style="color:#059669;">ðŸ”’ FINALIZED & PUBLISHED (Locked)</span>`;
+      finalizeStatusInfo.innerHTML = `Status: <span style="color:#059669;">🔒 FINALIZED & PUBLISHED (Locked)</span>`;
       if (triggerFinalizeBtn) triggerFinalizeBtn.textContent = "RE-PUBLISH / UPDATE MONTH";
     } else {
-      finalizeStatusInfo.innerHTML = `Status: <span style="color:#d97706;">ðŸ“ EDITABLE (Not published yet)</span>`;
+      finalizeStatusInfo.innerHTML = `Status: <span style="color:#d97706;">📝 EDITABLE (Not published yet)</span>`;
       if (triggerFinalizeBtn) triggerFinalizeBtn.textContent = "PUBLISH / FINALIZE MONTH";
     }
   };
@@ -2195,7 +2195,7 @@ function setupEvents() {
       populateMealDropdowns();
       if (nameInput) nameInput.value = "";
       if (priceInput) priceInput.value = "";
-      showToast(`Added custom meal: ${name} (â‚¹${price})`, "info");
+      showToast(`Added custom meal: ${name} (₹${price})`, "info");
     });
   }
 
@@ -2272,9 +2272,9 @@ function setupEvents() {
       const resultBox = document.getElementById("fee-calc-result-box");
       if (resultBox) {
         resultBox.innerHTML = `
-          <div>Calculated Total: <b>â‚¹${total.toLocaleString()}</b></div>
+          <div>Calculated Total: <b>₹${total.toLocaleString()}</b></div>
           <small style="font-size:12px;font-weight:400;color:#64748b;">
-            Rent (â‚¹${rent}) + Meals (${meals} Ã— â‚¹${rate} = â‚¹${meals * rate}) + Maintenance (â‚¹${maintenance})
+            Rent (₹${rent}) + Meals (${meals} × ₹${rate} = ₹${meals * rate}) + Maintenance (₹${maintenance})
           </small>
         `;
         resultBox.style.display = "block";
@@ -2390,7 +2390,7 @@ function setupEvents() {
           adminEmail: adminAuthContext.currentAdmin?.email || "admin",
           notes
         });
-        showToast(`âœ… Payment of â‚¹${amount.toLocaleString()} recorded & verified for ${studentName}!`, "success");
+        showToast(`✅ Payment of ₹${amount.toLocaleString()} recorded & verified for ${studentName}!`, "success");
         recordPayForm.reset();
         // Pre-fill billing month
         const bm = document.getElementById("record-payment-billing-month");
@@ -2400,7 +2400,7 @@ function setupEvents() {
         showToast(err.message, "error");
       } finally {
         btn.disabled = false;
-        btn.textContent = "âœ… Record & Verify Payment";
+        btn.textContent = "✅ Record & Verify Payment";
       }
     });
   }
@@ -2546,7 +2546,7 @@ function setupEvents() {
       } catch (err) {
         showToast(err.message, "error");
       } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "ðŸ“¤ Submit Transaction Details"; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "📤 Submit Transaction Details"; }
       }
     });
   }
@@ -2786,14 +2786,14 @@ async function loadStudentProfile() {
 
   if (!roomData) {
     if (profRoomNo) profRoomNo.innerHTML = `<span class="badge badge-warning">Not Allotted Yet</span>`;
-    if (profFloor) profFloor.textContent = "â€”";
-    if (profBed) profBed.textContent = "â€”";
+    if (profFloor) profFloor.textContent = "—";
+    if (profBed) profBed.textContent = "—";
     if (profAllotmentStatus) profAllotmentStatus.innerHTML = `<span class="badge badge-warning">Pending</span>`;
 
     if (roommatesContainer) {
       roommatesContainer.innerHTML = `
         <div style="padding: 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px;">
-          ðŸ  <strong>Room not allotted yet.</strong> Contact hostel administration for room allocation.
+          🏠 <strong>Room not allotted yet.</strong> Contact hostel administration for room allocation.
         </div>
       `;
     }
@@ -2828,7 +2828,7 @@ async function loadStudentProfile() {
       } else {
         roommatesContainer.innerHTML = `
           <div style="padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px;">
-            ðŸ‘¥ <strong>No roommates assigned.</strong> You are currently the only resident allotted to this room.
+            👥 <strong>No roommates assigned.</strong> You are currently the only resident allotted to this room.
           </div>
         `;
       }
@@ -2880,7 +2880,7 @@ function renderMonthlyDues(monthly) {
   const months = monthly.months || [];
   if (months.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">No published fee statements yet.</td></tr>`;
-    if (totalEl) totalEl.textContent = "â‚¹0";
+    if (totalEl) totalEl.textContent = "₹0";
     return;
   }
 
@@ -2898,14 +2898,14 @@ function renderMonthlyDues(monthly) {
     return `
       <tr>
         <td style="font-weight:600;">${escapeHtml(label)}</td>
-        <td>â‚¹${(m.finalAmount || 0).toLocaleString()}</td>
-        <td style="color:#15803d;">â‚¹${(m.paid || 0).toLocaleString()}</td>
-        <td style="color:#b91c1c; font-weight:700;">â‚¹${(m.due || 0).toLocaleString()}</td>
+        <td>₹${(m.finalAmount || 0).toLocaleString()}</td>
+        <td style="color:#15803d;">₹${(m.paid || 0).toLocaleString()}</td>
+        <td style="color:#b91c1c; font-weight:700;">₹${(m.due || 0).toLocaleString()}</td>
         <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
       </tr>`;
   }).join("");
 
-  if (totalEl) totalEl.textContent = `â‚¹${(monthly.totalOutstanding || 0).toLocaleString()}`;
+  if (totalEl) totalEl.textContent = `₹${(monthly.totalOutstanding || 0).toLocaleString()}`;
 }
 
 async function loadStudentPayments() {
@@ -2947,9 +2947,9 @@ async function loadStudentPayments() {
   const feeStatusBadge = document.getElementById("student-fee-status-badge");
   const finalizedNotice = document.getElementById("student-fee-finalized-notice");
 
-  if (feeTotalEl) feeTotalEl.textContent = `â‚¹${dues.total}`;
-  if (feePaidEl) feePaidEl.textContent = `â‚¹${dues.paid}`;
-  if (feePendingEl) feePendingEl.textContent = `â‚¹${dues.net}`;
+  if (feeTotalEl) feeTotalEl.textContent = `₹${dues.total}`;
+  if (feePaidEl) feePaidEl.textContent = `₹${dues.paid}`;
+  if (feePendingEl) feePendingEl.textContent = `₹${dues.net}`;
 
   if (feeStatusBadge) {
     if (dues.notJoinedYet) {
@@ -2957,7 +2957,7 @@ async function loadStudentPayments() {
     } else if (dues.isPublished || dues.isFinalized) {
       feeStatusBadge.innerHTML = dues.net <= 0 
         ? `<span class="badge badge-success">Published & Fully Paid</span>` 
-        : `<span class="badge badge-danger">Published (Due: â‚¹${dues.net.toLocaleString()})</span>`;
+        : `<span class="badge badge-danger">Published (Due: ₹${dues.net.toLocaleString()})</span>`;
     } else {
       feeStatusBadge.innerHTML = `<span class="badge badge-warning">Pending Publication</span>`;
     }
@@ -2966,19 +2966,19 @@ async function loadStudentPayments() {
   if (finalizedNotice) {
     if (dues.notJoinedYet) {
       finalizedNotice.style.display = "block";
-      finalizedNotice.innerHTML = `â„¹ï¸ <strong>Account Status:</strong> You joined the hostel in <strong>${dues.joiningMonth || 'a later month'}</strong>. Fees and attendance for prior months (such as <strong>${selectedMonth}</strong>) do not apply to your account.`;
+      finalizedNotice.innerHTML = `ℹ️ <strong>Account Status:</strong> You joined the hostel in <strong>${dues.joiningMonth || 'a later month'}</strong>. Fees and attendance for prior months (such as <strong>${selectedMonth}</strong>) do not apply to your account.`;
       finalizedNotice.style.background = "#eff6ff";
       finalizedNotice.style.borderColor = "#bfdbfe";
       finalizedNotice.style.color = "#1e40af";
     } else if (dues.isPublished || dues.isFinalized) {
       finalizedNotice.style.display = "block";
-      finalizedNotice.innerHTML = `âœ… <strong>${selectedMonth} Statement Published:</strong> Official fee statement for this month has been finalized and published by hostel administration.`;
+      finalizedNotice.innerHTML = `✅ <strong>${selectedMonth} Statement Published:</strong> Official fee statement for this month has been finalized and published by hostel administration.`;
       finalizedNotice.style.background = "#f0fdf4";
       finalizedNotice.style.borderColor = "#bbf7d0";
       finalizedNotice.style.color = "#166534";
     } else {
       finalizedNotice.style.display = "block";
-      finalizedNotice.innerHTML = `â³ <strong>${selectedMonth} Fee Statement Not Published Yet:</strong> Hostel administration has not published the official fee statement for this month yet. Recorded attendance will not update your fee balance until published.`;
+      finalizedNotice.innerHTML = `⏳ <strong>${selectedMonth} Fee Statement Not Published Yet:</strong> Hostel administration has not published the official fee statement for this month yet. Recorded attendance will not update your fee balance until published.`;
       finalizedNotice.style.background = "#fffbeb";
       finalizedNotice.style.borderColor = "#fef3c7";
       finalizedNotice.style.color = "#92400e";
@@ -3000,20 +3000,20 @@ async function loadStudentPayments() {
   const breakupNet = document.getElementById("fee-breakup-net");
 
   if (periodEl) periodEl.textContent = selectedMonth;
-  if (rentEl) rentEl.textContent = `â‚¹${dues.monthlyRent}`;
+  if (rentEl) rentEl.textContent = `₹${dues.monthlyRent}`;
   if (cntBf) cntBf.textContent = dues.bfCount;
-  if (bfEl) bfEl.textContent = `â‚¹${dues.breakfastCost}`;
+  if (bfEl) bfEl.textContent = `₹${dues.breakfastCost}`;
   if (cntLunch) cntLunch.textContent = dues.lunchCount;
-  if (lunchEl) lunchEl.textContent = `â‚¹${dues.lunchCost}`;
+  if (lunchEl) lunchEl.textContent = `₹${dues.lunchCost}`;
   if (cntDinner) cntDinner.textContent = dues.dinnerCount;
-  if (dinnerEl) dinnerEl.textContent = `â‚¹${dues.dinnerCost}`;
+  if (dinnerEl) dinnerEl.textContent = `₹${dues.dinnerCost}`;
   if (cntCustom) cntCustom.textContent = dues.customMealsCount || 0;
-  if (customEl) customEl.textContent = `â‚¹${dues.customMealsCost || 0}`;
-  if (breakupTotal) breakupTotal.textContent = `â‚¹${dues.total}`;
-  if (breakupPaid) breakupPaid.textContent = `â‚¹${dues.paid}`;
-  if (breakupNet) breakupNet.textContent = `â‚¹${dues.net}`;
+  if (customEl) customEl.textContent = `₹${dues.customMealsCost || 0}`;
+  if (breakupTotal) breakupTotal.textContent = `₹${dues.total}`;
+  if (breakupPaid) breakupPaid.textContent = `₹${dues.paid}`;
+  if (breakupNet) breakupNet.textContent = `₹${dues.net}`;
 
-  // QR Code & UPI ID â€” Fetch fresh hostel details directly from Firestore
+  // QR Code & UPI ID — Fetch fresh hostel details directly from Firestore
   let hostelData = adminAuthContext.currentHostel || {};
   try {
     const targetHostelId = currentStudentProfile?.hostelId || adminAuthContext.currentHostel?.id;
@@ -3063,27 +3063,27 @@ async function loadStudentPayments() {
   }
 
   tbody.innerHTML = payments.map(p => {
-    const utr = escapeHtml(p.utrNumber || p.transactionId || "â€”");
+    const utr = escapeHtml(p.utrNumber || p.transactionId || "—");
     const status = p.status || "Pending";
-    const billingMonth = escapeHtml(p.billingMonth || "â€”");
-    const remarks = escapeHtml(p.remarks || "â€”");
-    const dateStr = p.date || (p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString("en-IN") : "â€”");
+    const billingMonth = escapeHtml(p.billingMonth || "—");
+    const remarks = escapeHtml(p.remarks || "—");
+    const dateStr = p.date || (p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString("en-IN") : "—");
 
     let statusBadge = "";
     if (status === "Verified" || status === "Approved") {
-      statusBadge = `<span class="badge badge-success">âœ… Verified</span>`;
+      statusBadge = `<span class="badge badge-success">✅ Verified</span>`;
     } else if (status === "Rejected") {
-      statusBadge = `<span class="badge badge-danger">âŒ Rejected</span>`;
+      statusBadge = `<span class="badge badge-danger">❌ Rejected</span>`;
     } else {
-      statusBadge = `<span class="badge badge-warning">â³ ${escapeHtml(status)}</span>`;
+      statusBadge = `<span class="badge badge-warning">⏳ ${escapeHtml(status)}</span>`;
     }
 
     // Admin notes: show rejection reason for rejected payments; show verifier for verified
-    let adminNotes = `<span style="color:#94a3b8; font-style:italic; font-size:12px;">â€”</span>`;
+    let adminNotes = `<span style="color:#94a3b8; font-style:italic; font-size:12px;">—</span>`;
     if (status === "Rejected" && p.rejectionReason) {
-      adminNotes = `<span style="color:#b91c1c; font-size:12px; font-weight:600;">âŒ ${escapeHtml(p.rejectionReason)}</span>`;
+      adminNotes = `<span style="color:#b91c1c; font-size:12px; font-weight:600;">❌ ${escapeHtml(p.rejectionReason)}</span>`;
     } else if (status === "Verified" || status === "Approved") {
-      adminNotes = `<span style="color:#15803d; font-size:12px;">âœ“ Verified by warden</span>`;
+      adminNotes = `<span style="color:#15803d; font-size:12px;">✓ Verified by warden</span>`;
     }
 
     // Row left-border color by status
@@ -3094,7 +3094,7 @@ async function loadStudentPayments() {
     return `
       <tr style="${rowStyle}">
         <td>${dateStr}</td>
-        <td><strong>â‚¹${(Number(p.amount) || 0).toLocaleString()}</strong></td>
+        <td><strong>₹${(Number(p.amount) || 0).toLocaleString()}</strong></td>
         <td><code style="font-size:12px;">${utr}</code></td>
         <td>${billingMonth}</td>
         <td>${remarks}</td>
@@ -3150,9 +3150,9 @@ async function loadStudentMess() {
           ${isToday ? `<span class="badge badge-success" style="font-size:10px;">TODAY</span>` : ''}
         </div>
         <div style="font-size:13px;">
-          <p style="margin: 4px 0;"><strong>ðŸŒ… BF:</strong> ${escapeHtml(dayMenu.breakfast || '--')}</p>
-          <p style="margin: 4px 0;"><strong>â˜€ï¸ Lunch:</strong> ${escapeHtml(dayMenu.lunch || '--')}</p>
-          <p style="margin: 4px 0;"><strong>ðŸŒ™ Dinner:</strong> ${escapeHtml(dayMenu.dinner || '--')}</p>
+          <p style="margin: 4px 0;"><strong>🌅 BF:</strong> ${escapeHtml(dayMenu.breakfast || '--')}</p>
+          <p style="margin: 4px 0;"><strong>☀️ Lunch:</strong> ${escapeHtml(dayMenu.lunch || '--')}</p>
+          <p style="margin: 4px 0;"><strong>🌙 Dinner:</strong> ${escapeHtml(dayMenu.dinner || '--')}</p>
         </div>
       </div>
     `;

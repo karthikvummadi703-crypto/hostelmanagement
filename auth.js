@@ -1,4 +1,4 @@
-﻿// auth.js
+// auth.js
 // Admin Authentication & Multi-Hostel Context Manager
 
 import { 
@@ -67,7 +67,7 @@ class AdminAuthContext {
     this.notify();
 
     if (auth) {
-      // Show UI immediately â€” never block user behind a spinner.
+      // Show UI immediately — never block user behind a spinner.
       // Fire a very short safety timer (300ms) so the login page
       // is always visible even if Firebase SDK hasn't loaded yet.
       const safetyTimer = setTimeout(() => {
@@ -90,7 +90,7 @@ class AdminAuthContext {
           return;
         }
 
-        // User was already logged in â€” load their profile silently in background
+        // User was already logged in — load their profile silently in background
         try {
           await this.loadAdminAndHostel(firebaseUser.uid, firebaseUser.email);
         } catch (err) {
@@ -264,7 +264,7 @@ class AdminAuthContext {
     try {
       if (auth) {
         // Authenticate with Live Firebase Auth. This application is
-        // official-use only â€” there is no simulation or demo-credential
+        // official-use only — there is no simulation or demo-credential
         // fallback; accounts must be provisioned in Firebase Auth AND Firestore.
         const userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
         const uid = userCred.user.uid;
@@ -369,7 +369,7 @@ class AdminAuthContext {
 
     // Candidate login emails, tried in priority order.
     // App-provisioned students ALWAYS have auth email <roll>@hostel.local, regardless of
-    // any later edit to the display-only "email" profile field â€” so that goes first.
+    // any later edit to the display-only "email" profile field — so that goes first.
     // The Firestore profile email is a fallback for accounts created in Firebase Console
     // with a custom email.
     const candidates = [];
@@ -405,7 +405,7 @@ class AdminAuthContext {
         }
 
         // PRIMARY: the student is already signed in on the main auth instance
-        // (student portal). Re-authenticate that exact account â€” immune to any
+        // (student portal). Re-authenticate that exact account — immune to any
         // email-scheme mismatch, because the session already knows its own account.
         const currentUser = auth.currentUser;
         if (currentUser && (currentUser.email || "").toLowerCase()) {

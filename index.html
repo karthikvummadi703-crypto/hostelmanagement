@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -97,10 +97,10 @@
         <div class="role-selector-wrapper">
           <div class="role-tabs-container">
             <button type="button" id="btn-role-admin" class="btn-role-tab active">
-              ðŸ‘¨â€ðŸ’¼ Administrator
+              👨‍💼 Administrator
             </button>
             <button type="button" id="btn-role-student" class="btn-role-tab">
-              ðŸ‘¨â€ðŸŽ“ Student Resident
+              👨‍🎓 Student Resident
             </button>
           </div>
           <input type="hidden" id="login-role" value="admin">
@@ -187,7 +187,7 @@
           <div class="input-group">
             <label for="forgot-email">Account Email</label>
             <div class="input-wrapper">
-              <span class="input-icon">âœ‰ï¸</span>
+              <span class="input-icon">✉️</span>
               <input type="email" id="forgot-email" placeholder="admin@example.com">
             </div>
           </div>
@@ -197,24 +197,24 @@
           <div class="input-group">
             <label for="forgot-student-roll">Roll Number or Email</label>
             <div class="input-wrapper">
-              <span class="input-icon">ðŸŽ“</span>
+              <span class="input-icon">🎓</span>
               <input type="text" id="forgot-student-roll" placeholder="e.g. 25001A501">
             </div>
           </div>
           <div class="input-group">
             <label for="forgot-student-current-password">Current Password</label>
             <div class="input-wrapper">
-              <span class="input-icon">ðŸ”‘</span>
+              <span class="input-icon">🔑</span>
               <input type="password" id="forgot-student-current-password" placeholder="Enter current password">
-              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
             </div>
           </div>
           <div class="input-group">
             <label for="forgot-student-new-password">New Password</label>
             <div class="input-wrapper">
-              <span class="input-icon">ðŸ”’</span>
+              <span class="input-icon">🔒</span>
               <input type="password" id="forgot-student-new-password" placeholder="Minimum 6 characters">
-              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+              <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
             </div>
           </div>
         </div>
@@ -240,23 +240,23 @@
       <form id="form-edit-student">
         <input type="hidden" id="edit-student-uid">
         <div class="input-group">
-          <label for="edit-student-roll">Roll Number (Login ID â€” read-only)</label>
+          <label for="edit-student-roll">Roll Number (Login ID — read-only)</label>
           <div class="input-wrapper">
-            <span class="input-icon">ðŸŽ“</span>
+            <span class="input-icon">🎓</span>
             <input type="text" id="edit-student-roll" readonly style="background:#f1f5f9; color:#64748b;">
           </div>
         </div>
         <div class="input-group">
           <label for="edit-student-name">Student Name</label>
           <div class="input-wrapper">
-            <span class="input-icon">ðŸ‘¤</span>
+            <span class="input-icon">👤</span>
             <input type="text" id="edit-student-name" placeholder="Full name" required>
           </div>
         </div>
         <div class="input-group">
-          <label for="edit-student-email">Account Email (display only â€” login is by Roll Number)</label>
+          <label for="edit-student-email">Account Email (display only — login is by Roll Number)</label>
           <div class="input-wrapper">
-            <span class="input-icon">âœ‰ï¸</span>
+            <span class="input-icon">✉️</span>
             <input type="email" id="edit-student-email" required>
           </div>
         </div>
@@ -306,28 +306,28 @@
     <aside class="sidebar">
       <div class="logo" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
         <div style="display:flex; gap:10px; align-items:center;">
-          <span class="logo-emoji">ðŸ¨</span>
+          <span class="logo-emoji">🏨</span>
           <div>
             <span>Hostel Management</span>
             <small id="sidebar-hostel-subtitle">Loading hostel...</small>
           </div>
         </div>
-        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">â—€</button>
+        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">◀</button>
       </div>
       <nav>
-        <a class="active" href="#dashboard">ðŸ“Š Dashboard</a>
-        <a href="#students">ðŸ‘¨â€ðŸŽ“ Students</a>
-        <a href="#branches">ðŸŒ³ Branches</a>
-        <a href="#rooms">ðŸ  Rooms</a>
-        <a href="#allotment">ðŸ”„ Allotment</a>
-        <a href="#attendance">ðŸ“‹ Attendance</a>
-        <a href="#complaints">âš ï¸ Complaints</a>
-        <a href="#fees">ðŸ’° Fees</a>
-        <a href="#announcements">ðŸ“¢ Announcements</a>
-        <a href="#mess">ðŸ½ï¸ Mess</a>
-        <a href="#payments">ðŸ’³ Payments</a>
-        <a href="#settings">âš™ï¸ Settings</a>
-        <a href="#logout" class="nav-logout">ðŸšª Logout</a>
+        <a class="active" href="#dashboard">📊 Dashboard</a>
+        <a href="#students">👨‍🎓 Students</a>
+        <a href="#branches">🌳 Branches</a>
+        <a href="#rooms">🏠 Rooms</a>
+        <a href="#allotment">🔄 Allotment</a>
+        <a href="#attendance">📋 Attendance</a>
+        <a href="#complaints">⚠️ Complaints</a>
+        <a href="#fees">💰 Fees</a>
+        <a href="#announcements">📢 Announcements</a>
+        <a href="#mess">🍽️ Mess</a>
+        <a href="#payments">💳 Payments</a>
+        <a href="#settings">⚙️ Settings</a>
+        <a href="#logout" class="nav-logout">🚪 Logout</a>
       </nav>
       <div class="sidebar-user-footer">
         <div class="sidebar-avatar">A</div>
@@ -335,7 +335,7 @@
           <span id="admin-display-name">Hostel Admin</span>
           <small id="admin-display-email">admin@example.com</small>
         </div>
-        <button class="sidebar-logout-icon btn-logout-trigger" title="Sign Out">ðŸšª</button>
+        <button class="sidebar-logout-icon btn-logout-trigger" title="Sign Out">🚪</button>
       </div>
     </aside>
 
@@ -343,7 +343,7 @@
       <!-- Top Header Displaying Dynamic Hostel Name -->
       <header>
         <div class="header-left">
-          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; margin-right:12px; cursor:pointer;">â˜° Menu</button>
+          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; margin-right:12px; cursor:pointer;">☰ Menu</button>
           <div class="header-titles">
             <small>ENTERPRISE ADMIN PANEL</small>
             <h1>Hostel Management System</h1>
@@ -378,10 +378,10 @@
         
         <!-- Live Real-Time Aggregate Stats -->
         <div class="stats">
-          <div><span>ðŸ‘¨â€ðŸŽ“</span><small>Total Students</small><b id="stat-total-students">0</b></div>
-          <div><span>ðŸ </span><small>Total Rooms</small><b id="stat-total-rooms">0</b></div>
-          <div><span>ðŸ”´</span><small>Occupied Rooms</small><b id="stat-occupied-rooms">0</b></div>
-          <div><span>ðŸŸ¢</span><small>Available Rooms</small><b id="stat-available-rooms">0</b></div>
+          <div><span>👨‍🎓</span><small>Total Students</small><b id="stat-total-students">0</b></div>
+          <div><span>🏠</span><small>Total Rooms</small><b id="stat-total-rooms">0</b></div>
+          <div><span>🔴</span><small>Occupied Rooms</small><b id="stat-occupied-rooms">0</b></div>
+          <div><span>🟢</span><small>Available Rooms</small><b id="stat-available-rooms">0</b></div>
         </div>
 
         <!-- Live Instant Student Search -->
@@ -396,7 +396,7 @@
 
         <!-- Recent Notices Feed -->
         <div class="card">
-          <h3>ðŸ“¢ Active Announcements</h3>
+          <h3>📢 Active Announcements</h3>
           <div id="dashboard-announcements-list" class="announcements-summary-list">
             <p style="color:#94a3b8;">Loading announcements...</p>
           </div>
@@ -408,7 +408,7 @@
         <div class="title">
           <div><small>STUDENT MANAGEMENT</small><h2>Resident Directory</h2></div>
           <div class="toolbar-actions">
-            <button type="button" id="btn-export-students-csv" class="btn-secondary">ðŸ“¥ Export CSV</button>
+            <button type="button" id="btn-export-students-csv" class="btn-secondary">📥 Export CSV</button>
           </div>
         </div>
         
@@ -453,7 +453,7 @@
               <label>Account Password
                 <div class="input-wrapper">
                   <input type="password" id="new-student-password" placeholder="Min 6 characters" required minlength="6" style="padding-right:40px;">
-                  <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                  <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
                 </div>
               </label>
             </div>
@@ -550,7 +550,7 @@
         </div>
       </section>
 
-      <!-- 5. ALLOTMENT â€” PREMIUM WORKSPACE REDESIGN -->
+      <!-- 5. ALLOTMENT — PREMIUM WORKSPACE REDESIGN -->
       <section id="allotment">
 
         <!-- Page Header -->
@@ -561,7 +561,7 @@
             <p class="allot-subtitle">Assign students to available rooms and manage hostel allocation</p>
           </div>
           <div class="allot-hostel-badge">
-            <span class="allot-hostel-icon">ðŸ </span>
+            <span class="allot-hostel-icon">🏠</span>
             <div>
               <small>Current Hostel</small>
               <strong id="allot-hostel-name">Loading...</strong>
@@ -576,7 +576,7 @@
           <div class="allot-panel">
             <div class="allot-panel-header">
               <div class="allot-panel-title-row">
-                <h3>ðŸ‘¤ Student Selection</h3>
+                <h3>👤 Student Selection</h3>
                 <span class="allot-count-badge" id="allot-selected-student-count" style="display:none;">0 selected</span>
               </div>
               <button type="button" id="allot-select-all-visible" class="btn-allot-text">Select All</button>
@@ -584,7 +584,7 @@
 
             <!-- Search -->
             <div class="allot-search-bar">
-              <span class="allot-search-icon">ðŸ”</span>
+              <span class="allot-search-icon">🔍</span>
               <input type="text" id="allot-student-search" placeholder="Search by roll number or name..." />
             </div>
 
@@ -623,14 +623,14 @@
           <div class="allot-panel">
             <div class="allot-panel-header">
               <div class="allot-panel-title-row">
-                <h3>ðŸ  Room Selection</h3>
+                <h3>🏠 Room Selection</h3>
                 <span class="allot-count-badge" id="allot-selected-room-count" style="display:none;">0 selected</span>
               </div>
             </div>
 
             <!-- Search -->
             <div class="allot-search-bar">
-              <span class="allot-search-icon">ðŸ”</span>
+              <span class="allot-search-icon">🔍</span>
               <input type="text" id="allot-room-search" placeholder="Search room number..." />
             </div>
 
@@ -683,7 +683,7 @@
         <!-- Reallocation Zone -->
         <div class="allot-reallocation-zone">
           <div class="allot-reallocation-info">
-            <h4>âš™ï¸ Reallocation</h4>
+            <h4>⚙️ Reallocation</h4>
             <p>Reorganize existing student allocations across available rooms. This will clear and regenerate all current room assignments.</p>
           </div>
           <button type="button" id="btn-reallocate-open" class="btn-reallocate">
@@ -691,10 +691,10 @@
           </button>
         </div>
 
-        <!-- Current Allocations List (student â†’ room) -->
+        <!-- Current Allocations List (student → room) -->
         <div class="card" style="margin-top:20px;">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap;">
-            <h3 style="margin:0;">ðŸ“‹ Allocated Students &amp; Rooms</h3>
+            <h3 style="margin:0;">📋 Allocated Students &amp; Rooms</h3>
             <span id="allocation-list-count" class="badge badge-info">0 allocated</span>
           </div>
           <table>
@@ -719,7 +719,7 @@
           <div class="allot-modal-card">
             <div class="allot-modal-header">
               <h3>Confirm Allocation</h3>
-              <button type="button" class="allot-modal-close" id="btn-allot-modal-close" aria-label="Close">Ã—</button>
+              <button type="button" class="allot-modal-close" id="btn-allot-modal-close" aria-label="Close">×</button>
             </div>
             <div class="allot-modal-body">
               <div class="allot-modal-stat-row">
@@ -732,7 +732,7 @@
                   <label>Beds Available</label>
                 </div>
               </div>
-              <div class="allot-modal-room-names" id="allot-modal-rooms">â€”</div>
+              <div class="allot-modal-room-names" id="allot-modal-rooms">—</div>
               <p class="allot-modal-note">Students will be assigned to available beds in the selected rooms. This operation uses a database transaction and cannot be partially completed.</p>
             </div>
             <div class="allot-modal-footer">
@@ -746,8 +746,8 @@
         <div class="allot-modal-overlay" id="reallot-confirm-modal" style="display:none;" role="dialog" aria-modal="true">
           <div class="allot-modal-card">
             <div class="allot-modal-header allot-modal-header-danger">
-              <h3>âš ï¸ Reallocate All Students?</h3>
-              <button type="button" class="allot-modal-close" id="btn-reallot-modal-close" aria-label="Close">Ã—</button>
+              <h3>⚠️ Reallocate All Students?</h3>
+              <button type="button" class="allot-modal-close" id="btn-reallot-modal-close" aria-label="Close">×</button>
             </div>
             <div class="allot-modal-body">
               <p>This will reorganize <strong>all existing hostel allocations</strong> and may change current room assignments for every student in this hostel.</p>
@@ -755,7 +755,7 @@
             </div>
             <div class="allot-modal-footer">
               <button type="button" class="btn-modal-cancel" id="btn-reallot-modal-cancel">Cancel</button>
-              <button type="button" class="btn-modal-confirm btn-modal-danger" id="btn-reallocate-confirm">Continue â€” Reallocate</button>
+              <button type="button" class="btn-modal-confirm btn-modal-danger" id="btn-reallocate-confirm">Continue — Reallocate</button>
             </div>
           </div>
         </div>
@@ -775,7 +775,7 @@
         <!-- Mark Attendance Card -->
         <div id="attendance-mark-card" class="card">
           <div id="attendance-finalized-badge" style="display:none; margin-bottom:14px; padding:10px 14px; background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; border-radius:8px; font-weight:600; font-size:13px;">
-            ðŸ”’ Month Finalized: Attendance records for this month are locked and published.
+            🔒 Month Finalized: Attendance records for this month are locked and published.
           </div>
           <div class="row">
             <label>Date
@@ -783,9 +783,9 @@
             </label>
             <label>Meal Session / Item
               <select id="attendance-meal">
-                <option value="Breakfast">ðŸŒ… Breakfast</option>
-                <option value="Lunch" selected>â˜€ï¸ Lunch</option>
-                <option value="Dinner">ðŸŒ™ Dinner</option>
+                <option value="Breakfast">🌅 Breakfast</option>
+                <option value="Lunch" selected>☀️ Lunch</option>
+                <option value="Dinner">🌙 Dinner</option>
               </select>
             </label>
             <button type="button" id="btn-load-attendance">Load Roster Sheet</button>
@@ -809,7 +809,7 @@
 
         <!-- View Previous Attendance Card (Initially Hidden) -->
         <div id="attendance-history-card" class="card" style="display: none; border-left: 4px solid var(--primary);">
-          <h3>ðŸ—“ï¸ View Previously Recorded Attendance</h3>
+          <h3>🗓️ View Previously Recorded Attendance</h3>
           <p class="form-subtext">Fetch historical attendance records for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. Historical records are strictly read-only.</p>
           <div class="row" style="margin-bottom: 14px; align-items: flex-end;">
             <label>Date
@@ -817,9 +817,9 @@
             </label>
             <label>Meal Session / Item
               <select id="history-attendance-meal">
-                <option value="Breakfast">ðŸŒ… Breakfast</option>
-                <option value="Lunch">â˜€ï¸ Lunch</option>
-                <option value="Dinner">ðŸŒ™ Dinner</option>
+                <option value="Breakfast">🌅 Breakfast</option>
+                <option value="Lunch">☀️ Lunch</option>
+                <option value="Dinner">🌙 Dinner</option>
               </select>
             </label>
             <button type="button" id="btn-fetch-history-attendance">Fetch Attendance Record</button>
@@ -834,7 +834,7 @@
                 <th>Room</th>
                 <th>Attendance Status</th>
                 <th>Meal</th>
-                <th>Meal Cost (â‚¹)</th>
+                <th>Meal Cost (₹)</th>
               </tr>
             </thead>
             <tbody id="history-attendance-tbody">
@@ -845,7 +845,7 @@
 
         <!-- Publish / Finalize Monthly Attendance Card -->
         <div id="attendance-finalize-card" class="card" style="margin-top: 24px; border-left: 4px solid #10b981;">
-          <h3>ðŸ—“ï¸ Publish & Finalize Monthly Attendance</h3>
+          <h3>🗓️ Publish & Finalize Monthly Attendance</h3>
           <p class="form-subtext">Review daily attendance and finalize the month to calculate immutable student fees for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>.</p>
           <div class="row" style="align-items: flex-end;">
             <label style="flex:1;">Select Month & Year
@@ -872,8 +872,8 @@
         <!-- Previously Published Bills -->
         <div class="card" style="margin-top: 24px;">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-            <h3>ðŸ§¾ Previously Published Bills</h3>
-            <button type="button" id="btn-refresh-published-bills" class="btn-secondary" style="padding:6px 14px;">â†» Refresh</button>
+            <h3>🧾 Previously Published Bills</h3>
+            <button type="button" id="btn-refresh-published-bills" class="btn-secondary" style="padding:6px 14px;">↻ Refresh</button>
           </div>
           <p class="form-subtext">All finalized months for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. View per-student statements or delete a published bill to unlock the month for editing.</p>
           <div style="overflow-x:auto;">
@@ -882,9 +882,9 @@
                 <tr>
                   <th>Month</th>
                   <th>Students Billed</th>
-                  <th>Total Billed (â‚¹)</th>
-                  <th>Collected (â‚¹)</th>
-                  <th>Pending (â‚¹)</th>
+                  <th>Total Billed (₹)</th>
+                  <th>Collected (₹)</th>
+                  <th>Pending (₹)</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -949,7 +949,7 @@
       <section id="fees">
         <div class="title"><div><small>FINANCIAL MANAGEMENT</small><h2>Fees Administration</h2></div></div>
         <div class="card form">
-          <h3>âš™ï¸ Configure Month-Specific Fee & Meal Pricing</h3>
+          <h3>⚙️ Configure Month-Specific Fee & Meal Pricing</h3>
           <p class="form-subtext">Configure monthly room rent and session meal prices for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>. Finalized months remain locked and protected.</p>
           <form id="form-fee-settings">
             <div class="row">
@@ -969,31 +969,31 @@
                   <option value="2026_12">December 2026</option>
                 </select>
               </label>
-              <label style="flex:1;">Monthly Room Rent (â‚¹)
+              <label style="flex:1;">Monthly Room Rent (₹)
                 <input type="number" id="fee-monthly-rent" value="2000" min="0" required>
               </label>
             </div>
 
             <div class="row" style="margin-top: 10px;">
-              <label>Breakfast Price (â‚¹)
+              <label>Breakfast Price (₹)
                 <input type="number" id="meal-price-breakfast" value="30" min="0" required>
               </label>
-              <label>Lunch Price (â‚¹)
+              <label>Lunch Price (₹)
                 <input type="number" id="meal-price-lunch" value="50" min="0" required>
               </label>
-              <label>Dinner Price (â‚¹)
+              <label>Dinner Price (₹)
                 <input type="number" id="meal-price-dinner" value="45" min="0" required>
               </label>
             </div>
 
             <!-- Custom Meal Items -->
             <div style="margin-top: 16px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
-              <h4 style="margin-bottom: 8px; font-size: 13px; color: var(--primary);">âž• Add Custom Meal / Snack Item</h4>
+              <h4 style="margin-bottom: 8px; font-size: 13px; color: var(--primary);">➕ Add Custom Meal / Snack Item</h4>
               <div class="row" style="align-items: flex-end;">
                 <label style="flex:2;">Item Name
                   <input type="text" id="input-custom-meal-name" placeholder="e.g. Evening Snacks, Tea, Milk">
                 </label>
-                <label style="flex:1;">Price (â‚¹)
+                <label style="flex:1;">Price (₹)
                   <input type="number" id="input-custom-meal-price" placeholder="e.g. 20" min="0">
                 </label>
                 <button type="button" id="btn-add-custom-item" style="padding: 10px 14px; font-size: 12px; margin-bottom: 0;">+ Add Item</button>
@@ -1058,28 +1058,28 @@
           <form id="form-mess-timetable">
             <div class="row">
               <label>Breakfast Timing
-                <input type="text" id="mess-timing-breakfast" value="07:30 AM â€“ 09:00 AM" required>
+                <input type="text" id="mess-timing-breakfast" value="07:30 AM – 09:00 AM" required>
               </label>
               <label>Lunch Timing
-                <input type="text" id="mess-timing-lunch" value="12:30 PM â€“ 02:00 PM" required>
+                <input type="text" id="mess-timing-lunch" value="12:30 PM – 02:00 PM" required>
               </label>
               <label>Dinner Timing
-                <input type="text" id="mess-timing-dinner" value="07:30 PM â€“ 09:00 PM" required>
+                <input type="text" id="mess-timing-dinner" value="07:30 PM – 09:00 PM" required>
               </label>
             </div>
             <label>Today's Featured Menu Notice
               <textarea id="mess-menu-today" rows="2" placeholder="Menu details..."></textarea>
             </label>
 
-            <h4 style="margin: 16px 0 8px; color: var(--primary);">ðŸ—“ï¸ 7-Day Weekly Menu Timetable</h4>
+            <h4 style="margin: 16px 0 8px; color: var(--primary);">🗓️ 7-Day Weekly Menu Timetable</h4>
             <div style="overflow-x: auto;">
               <table style="font-size: 13px;">
                 <thead>
                   <tr>
                     <th style="width: 100px;">Day</th>
-                    <th>ðŸŒ… Breakfast</th>
-                    <th>â˜€ï¸ Lunch</th>
-                    <th>ðŸŒ™ Dinner</th>
+                    <th>🌅 Breakfast</th>
+                    <th>☀️ Lunch</th>
+                    <th>🌙 Dinner</th>
                   </tr>
                 </thead>
                 <tbody id="mess-weekly-timetable-tbody">
@@ -1094,9 +1094,9 @@
         <div class="card">
           <h3>Current Published Schedule</h3>
           <div id="mess-published-schedule" class="timeline">
-            <div>ðŸŒ… <b>Breakfast</b><span id="display-mess-bf">07:30 AM â€“ 09:00 AM</span></div>
-            <div>â˜€ï¸ <b>Lunch</b><span id="display-mess-lu">12:30 PM â€“ 02:00 PM</span></div>
-            <div>ðŸŒ™ <b>Dinner</b><span id="display-mess-di">07:30 PM â€“ 09:00 PM</span></div>
+            <div>🌅 <b>Breakfast</b><span id="display-mess-bf">07:30 AM – 09:00 AM</span></div>
+            <div>☀️ <b>Lunch</b><span id="display-mess-lu">12:30 PM – 02:00 PM</span></div>
+            <div>🌙 <b>Dinner</b><span id="display-mess-di">07:30 PM – 09:00 PM</span></div>
           </div>
         </div>
       </section>
@@ -1108,22 +1108,22 @@
         <!-- Payment Summary Stat Cards -->
         <div class="stats pay-stats four" style="margin-bottom: 24px;">
           <div class="pay-stat-card">
-            <div class="pay-stat-icon" style="background:#eff6ff;">ðŸ’°</div>
+            <div class="pay-stat-icon" style="background:#eff6ff;">💰</div>
             <small>Total Collected</small>
-            <b id="pay-stat-total-collected">â‚¹0</b>
+            <b id="pay-stat-total-collected">₹0</b>
           </div>
           <div class="pay-stat-card">
-            <div class="pay-stat-icon" style="background:#fef3c7;">â³</div>
+            <div class="pay-stat-icon" style="background:#fef3c7;">⏳</div>
             <small>Pending Verification</small>
             <b id="pay-stat-pending" style="color:#d97706;">0</b>
           </div>
           <div class="pay-stat-card">
-            <div class="pay-stat-icon" style="background:#f0fdf4;">âœ…</div>
+            <div class="pay-stat-icon" style="background:#f0fdf4;">✅</div>
             <small>Verified Payments</small>
             <b id="pay-stat-verified" style="color:#16a34a;">0</b>
           </div>
           <div class="pay-stat-card">
-            <div class="pay-stat-icon" style="background:#fef2f2;">âŒ</div>
+            <div class="pay-stat-icon" style="background:#fef2f2;">❌</div>
             <small>Rejected</small>
             <b id="pay-stat-rejected" style="color:#dc2626;">0</b>
           </div>
@@ -1133,7 +1133,7 @@
         <div class="payment-grid" style="margin-bottom: 24px;">
           <!-- QR Card -->
           <div class="card pay-qr-card">
-            <h3>ðŸ”’ Hostel Fee QR & UPI</h3>
+            <h3>🔒 Hostel Fee QR & UPI</h3>
             <div class="qr-frame" id="upi-qr-display">
               <span id="qr-placeholder-text" class="qr-placeholder-msg">No QR Uploaded Yet</span>
               <img id="qr-image-element" style="display:none; max-width:100%; max-height:100%; object-fit:contain; border-radius:6px;" alt="UPI QR Code">
@@ -1155,7 +1155,7 @@
 
           <!-- Record Manual Payment Card -->
           <div class="card">
-            <h3>ðŸ“‹ Record Offline / Manual Payment</h3>
+            <h3>📋 Record Offline / Manual Payment</h3>
             <p class="form-subtext">Use this to log a cash or bank-transfer payment directly. These are <strong>pre-verified</strong> and immediately deducted from the student's balance.</p>
             <form id="form-record-payment">
               <label style="display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Student
@@ -1164,7 +1164,7 @@
                 </select>
               </label>
               <div class="row">
-                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Amount (â‚¹)
+                <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Amount (₹)
                   <input type="number" id="record-payment-amount" min="1" placeholder="e.g. 5000" required style="margin-top:6px;">
                 </label>
                 <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155;">Transaction ID / UTR
@@ -1179,7 +1179,7 @@
                   <input type="text" id="record-payment-notes" placeholder="e.g. Cash payment for Oct 2026" style="margin-top:6px;">
                 </label>
               </div>
-              <button type="submit" id="btn-submit-payment" style="margin-top:4px; width:100%;">âœ… Record & Verify Payment</button>
+              <button type="submit" id="btn-submit-payment" style="margin-top:4px; width:100%;">✅ Record & Verify Payment</button>
             </form>
           </div>
         </div>
@@ -1187,13 +1187,13 @@
         <!-- Transaction Ledger with Filters -->
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-            <h3 style="margin:0;">ðŸ“œ Payment Transaction Ledger</h3>
+            <h3 style="margin:0;">📜 Payment Transaction Ledger</h3>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <div class="pay-filter-tabs" id="pay-status-tabs">
                 <button type="button" class="pay-tab active" data-status="all">All</button>
-                <button type="button" class="pay-tab" data-status="Pending Verification">â³ Pending</button>
-                <button type="button" class="pay-tab" data-status="Verified">âœ… Verified</button>
-                <button type="button" class="pay-tab" data-status="Rejected">âŒ Rejected</button>
+                <button type="button" class="pay-tab" data-status="Pending Verification">⏳ Pending</button>
+                <button type="button" class="pay-tab" data-status="Verified">✅ Verified</button>
+                <button type="button" class="pay-tab" data-status="Rejected">❌ Rejected</button>
               </div>
               <input type="month" id="pay-ledger-month-filter" title="Filter by billing month" style="padding:6px 10px; font-size:12px; border:1px solid #cbd5e1; border-radius:8px;">
             </div>
@@ -1227,7 +1227,7 @@
         
         <!-- One-Click Database Seeder for Quick Setup -->
         <div class="card" style="background:#f0fdf4;border-color:#bbf7d0;">
-          <h3 style="color:#166534;">ðŸš€ Initial Database Setup & Seed Tool</h3>
+          <h3 style="color:#166534;">🚀 Initial Database Setup & Seed Tool</h3>
           <p style="font-size:13px;color:#15803d;margin-bottom:14px;">
             If this hostel is newly created and empty, click this button to seed initial branches (CSE, ECE, EEE, etc.), sample rooms, and announcements directly into Cloud Firestore for <strong><span class="active-hostel-name-inline">Current Hostel</span></strong>.
           </p>
@@ -1266,13 +1266,13 @@
             <label>Current Password
               <div class="input-wrapper">
                 <input type="password" id="admin-current-password" placeholder="Enter current password" required style="padding-right:40px;">
-                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
               </div>
             </label>
             <label>New Password
               <div class="input-wrapper">
                 <input type="password" id="admin-new-password" placeholder="Min 6 characters" required minlength="6" style="padding-right:40px;">
-                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
               </div>
             </label>
             <button type="submit">Update Password</button>
@@ -1296,27 +1296,27 @@
     <aside class="sidebar">
       <div class="brand" style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 20px;">
         <div style="display:flex; gap:10px; align-items:center;">
-          <div class="brand-icon">ðŸŽ“</div>
+          <div class="brand-icon">🎓</div>
           <div class="brand-text">Student Portal</div>
         </div>
-        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">â—€</button>
+        <button type="button" class="btn-sidebar-toggle btn-close-sidebar" title="Close Sidebar" style="background:rgba(255,255,255,0.12); border:none; color:#93c5fd; font-size:14px; padding:4px 8px; border-radius:6px; cursor:pointer;">◀</button>
       </div>
       <ul class="nav">
-        <li><a href="#student-profile" class="nav-item active"><span class="icon">ðŸ‘¤</span><span>My Profile</span></a></li>
-        <li><a href="#student-complaints" class="nav-item"><span class="icon">ðŸ› ï¸</span><span>Complaints</span></a></li>
-        <li><a href="#student-payments" class="nav-item"><span class="icon">ðŸ’³</span><span>Payments</span></a></li>
-        <li><a href="#student-mess" class="nav-item"><span class="icon">ðŸ±</span><span>Mess Timetable</span></a></li>
-        <li><a href="#student-announcements" class="nav-item"><span class="icon">ðŸ“¢</span><span>Announcements</span></a></li>
-        <li><a href="#student-security" class="nav-item"><span class="icon">ðŸ”’</span><span>Change Password</span></a></li>
-        <li style="margin-top: auto;"><a href="#student-logout" class="nav-item btn-student-logout-trigger"><span class="icon">ðŸšª</span><span>Logout</span></a></li>
+        <li><a href="#student-profile" class="nav-item active"><span class="icon">👤</span><span>My Profile</span></a></li>
+        <li><a href="#student-complaints" class="nav-item"><span class="icon">🛠️</span><span>Complaints</span></a></li>
+        <li><a href="#student-payments" class="nav-item"><span class="icon">💳</span><span>Payments</span></a></li>
+        <li><a href="#student-mess" class="nav-item"><span class="icon">🍱</span><span>Mess Timetable</span></a></li>
+        <li><a href="#student-announcements" class="nav-item"><span class="icon">📢</span><span>Announcements</span></a></li>
+        <li><a href="#student-security" class="nav-item"><span class="icon">🔒</span><span>Change Password</span></a></li>
+        <li style="margin-top: auto;"><a href="#student-logout" class="nav-item btn-student-logout-trigger"><span class="icon">🚪</span><span>Logout</span></a></li>
       </ul>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <div style="display:flex; align-items:center; gap: 12px;">
-          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; cursor:pointer;">â˜° Menu</button>
-          <span style="font-size: 20px;">ðŸ¢</span>
+          <button type="button" class="btn-sidebar-toggle btn-open-sidebar" title="Open Sidebar" style="display:none; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--primary); font-weight:600; font-size:13px; padding:6px 12px; border-radius:6px; cursor:pointer;">☰ Menu</button>
+          <span style="font-size: 20px;">🏢</span>
           <div>
             <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; display: block;">Hostel Campus</span>
             <strong id="student-topbar-hostel-name" style="font-size: 15px; color: var(--primary);">Loading Hostel...</strong>
@@ -1345,7 +1345,7 @@
                 <p id="profile-display-roll" style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Roll No: --</p>
               </div>
             </div>
-            <h4 style="margin-bottom: 10px; color: var(--primary);">ðŸ“Œ Personal Details</h4>
+            <h4 style="margin-bottom: 10px; color: var(--primary);">📌 Personal Details</h4>
             <table style="width: 100%;">
               <tr><th style="width: 40%;">Roll Number</th><td id="prof-roll">--</td></tr>
               <tr><th>Branch</th><td id="prof-branch">--</td></tr>
@@ -1358,7 +1358,7 @@
 
           <!-- Hostel & Room Details Card -->
           <div class="card" style="flex: 1;">
-            <h3 style="margin-bottom: 12px;">ðŸ  Hostel & Room Accommodation</h3>
+            <h3 style="margin-bottom: 12px;">🏠 Hostel & Room Accommodation</h3>
             <table style="width: 100%;">
               <tr><th style="width: 40%;">Hostel Campus</th><td id="prof-hostel">--</td></tr>
               <tr><th>Room Number</th><td id="prof-room-no"><span class="badge badge-warning">Not Allotted Yet</span></td></tr>
@@ -1371,7 +1371,7 @@
 
         <!-- Roommates Card -->
         <div class="card">
-          <h3>ðŸ‘¥ Roommates</h3>
+          <h3>👥 Roommates</h3>
           <p class="form-subtext">Students currently allotted to the same room.</p>
           <div id="prof-roommates-container" style="margin-top: 10px;">
             <p style="color: #94a3b8; font-size: 14px;">Loading roommate information...</p>
@@ -1384,7 +1384,7 @@
         <div class="title"><div><small>SUPPORT DESK</small><h2>My Complaints & Tickets</h2></div></div>
         
         <div class="card form" style="margin-bottom:20px;">
-          <h3>âž• Submit New Complaint</h3>
+          <h3>➕ Submit New Complaint</h3>
           <form id="form-student-new-complaint">
             <div class="row">
               <label>Category
@@ -1406,7 +1406,7 @@
         </div>
 
         <div class="card">
-          <h3>ðŸ“‹ My Submitted Tickets</h3>
+          <h3>📋 My Submitted Tickets</h3>
           <table>
             <thead>
               <tr>
@@ -1431,7 +1431,7 @@
         <!-- Month-wise Fee Dues Card (FIFO allocation) -->
         <div class="card" style="margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3>ðŸ—“ï¸ Month-wise Fee Dues</h3>
+            <h3>🗓️ Month-wise Fee Dues</h3>
             <small style="color:#64748b;">Verified payments are applied to the oldest outstanding month first.</small>
           </div>
           <table style="margin-bottom:0;">
@@ -1449,14 +1449,14 @@
             </tbody>
           </table>
           <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; font-weight:700; font-size:15px; color:#b91c1c; margin-top:16px;">
-            Total Outstanding: <span id="monthly-dues-total-outstanding">â‚¹0</span>
+            Total Outstanding: <span id="monthly-dues-total-outstanding">₹0</span>
           </div>
         </div>
 
         <!-- Fee Summary Card -->
         <div class="card" style="margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3>ðŸ“Š Fee Summary & Dues</h3>
+            <h3>📊 Fee Summary & Dues</h3>
             <div style="display: flex; align-items: center; gap: 8px;">
               <label style="margin: 0; font-size: 13px; font-weight: 600;">Billing Month:</label>
               <input type="month" id="student-fee-month-picker" style="padding: 4px 8px; font-size: 13px;">
@@ -1467,15 +1467,15 @@
           <div class="metrics" style="margin-bottom: 16px;">
             <div class="metric">
               <small>Total Monthly Fee</small>
-              <strong id="student-fee-total">â‚¹0</strong>
+              <strong id="student-fee-total">₹0</strong>
             </div>
             <div class="metric">
               <small>Amount Paid</small>
-              <strong id="student-fee-paid" style="color:#10b981;">â‚¹0</strong>
+              <strong id="student-fee-paid" style="color:#10b981;">₹0</strong>
             </div>
             <div class="metric">
               <small>Pending Due</small>
-              <strong id="student-fee-pending" style="color:#ef4444;">â‚¹0</strong>
+              <strong id="student-fee-pending" style="color:#ef4444;">₹0</strong>
             </div>
             <div class="metric">
               <small>Status</small>
@@ -1488,14 +1488,14 @@
             <h4 style="margin-bottom:10px; color:var(--primary);">Itemized Breakdown for <span id="fee-statement-period">Current Month</span></h4>
             <table style="margin-bottom:0;">
               <tbody>
-                <tr><td>Monthly Room Rent</td><td style="text-align:right;" id="fee-breakup-rent">â‚¹0</td></tr>
-                <tr><td>Breakfast Charges (<span id="fee-cnt-bf">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-bf">â‚¹0</td></tr>
-                <tr><td>Lunch Charges (<span id="fee-cnt-lunch">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-lunch">â‚¹0</td></tr>
-                <tr><td>Dinner Charges (<span id="fee-cnt-dinner">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-dinner">â‚¹0</td></tr>
-                <tr><td>Custom Meals & Snacks (<span id="fee-cnt-custom">0</span> items)</td><td style="text-align:right;" id="fee-breakup-custom">â‚¹0</td></tr>
-                <tr style="font-weight:700; border-top:2px solid #cbd5e1;"><td>Total Monthly Charges</td><td style="text-align:right; color:var(--primary);" id="fee-breakup-total">â‚¹0</td></tr>
-                <tr style="font-weight:600; color:#10b981;"><td>Verified Payments</td><td style="text-align:right;" id="fee-breakup-paid">â‚¹0</td></tr>
-                <tr style="font-weight:700; color:#ef4444;"><td>Net Payable Balance</td><td style="text-align:right;" id="fee-breakup-net">â‚¹0</td></tr>
+                <tr><td>Monthly Room Rent</td><td style="text-align:right;" id="fee-breakup-rent">₹0</td></tr>
+                <tr><td>Breakfast Charges (<span id="fee-cnt-bf">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-bf">₹0</td></tr>
+                <tr><td>Lunch Charges (<span id="fee-cnt-lunch">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-lunch">₹0</td></tr>
+                <tr><td>Dinner Charges (<span id="fee-cnt-dinner">0</span> meals)</td><td style="text-align:right;" id="fee-breakup-dinner">₹0</td></tr>
+                <tr><td>Custom Meals & Snacks (<span id="fee-cnt-custom">0</span> items)</td><td style="text-align:right;" id="fee-breakup-custom">₹0</td></tr>
+                <tr style="font-weight:700; border-top:2px solid #cbd5e1;"><td>Total Monthly Charges</td><td style="text-align:right; color:var(--primary);" id="fee-breakup-total">₹0</td></tr>
+                <tr style="font-weight:600; color:#10b981;"><td>Verified Payments</td><td style="text-align:right;" id="fee-breakup-paid">₹0</td></tr>
+                <tr style="font-weight:700; color:#ef4444;"><td>Net Payable Balance</td><td style="text-align:right;" id="fee-breakup-net">₹0</td></tr>
               </tbody>
             </table>
           </div>
@@ -1504,35 +1504,35 @@
           <!-- Hostel QR / UPI Card - Premium -->
           <div class="row" style="gap: 20px; align-items: flex-start; margin-bottom: 20px;">
             <div class="card stu-qr-card" style="flex:1;">
-              <h3>ðŸ’³ Hostel Payment Gateway</h3>
+              <h3>💳 Hostel Payment Gateway</h3>
               <p class="form-subtext">Scan the QR code or use the UPI ID to transfer your fee amount.</p>
               <div class="stu-qr-frame">
                 <img id="student-payment-qr-img" src="" alt="Hostel QR" style="max-width:200px; max-height:200px; border-radius:10px; display:none; margin:0 auto 12px;">
-                <div id="student-payment-qr-placeholder" class="stu-qr-placeholder">ðŸ“± QR code not configured yet.<br><small>Contact your warden to set up UPI QR.</small></div>
+                <div id="student-payment-qr-placeholder" class="stu-qr-placeholder">📱 QR code not configured yet.<br><small>Contact your warden to set up UPI QR.</small></div>
               </div>
               <div class="stu-upi-display">
                 <small>Official Hostel UPI ID</small>
                 <span id="student-payment-upi-id">Not Configured</span>
               </div>
               <div class="stu-scan-instructions">
-                <span>ðŸ“± Open any UPI app</span>
-                <span>â†’</span>
+                <span>📱 Open any UPI app</span>
+                <span>→</span>
                 <span>Scan / Enter UPI</span>
-                <span>â†’</span>
+                <span>→</span>
                 <span>Pay & submit UTR below</span>
               </div>
             </div>
 
             <!-- Submit UTR / Payment Reference Form -->
             <div class="card" style="flex:1;">
-              <h3>ðŸ“ Submit Payment Reference (UTR)</h3>
+              <h3>📝 Submit Payment Reference (UTR)</h3>
               <p class="form-subtext">After making the payment, submit your UTR/transaction ID here for warden verification.</p>
               <div id="utr-submit-success-banner" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:8px; padding:12px 14px; font-weight:600; font-size:13px; margin-bottom:14px;">
-                âœ… <strong>Payment submitted!</strong> Your transaction is under verification. Check your history below.
+                ✅ <strong>Payment submitted!</strong> Your transaction is under verification. Check your history below.
               </div>
               <form id="form-student-submit-utr">
                 <div class="row">
-                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Amount Paid (â‚¹)
+                  <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Amount Paid (₹)
                     <input type="number" id="student-utr-amount" placeholder="e.g. 3500" min="1" required style="margin-top:6px;">
                   </label>
                   <label style="flex:1; display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Billing Month
@@ -1550,19 +1550,19 @@
                     <input type="text" id="student-utr-remarks" placeholder="e.g. November Fee" style="margin-top:6px;">
                   </label>
                 </div>
-                <button type="submit" class="wide" style="margin-top:4px;">ðŸ“¤ Submit Transaction Details</button>
+                <button type="submit" class="wide" style="margin-top:4px;">📤 Submit Transaction Details</button>
               </form>
             </div>
           </div>
 
           <!-- Payment History -->
           <div class="card">
-            <h3>ðŸ“œ My Transaction History</h3>
+            <h3>📜 My Transaction History</h3>
             <table>
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Amount (â‚¹)</th>
+                  <th>Amount (₹)</th>
                   <th>UTR / Ref No.</th>
                   <th>Billing Month</th>
                   <th>Remarks</th>
@@ -1582,7 +1582,7 @@
         <div class="title"><div><small>DINING & MENU</small><h2>Mess Timetable & Menu</h2></div></div>
         
         <div class="card" style="margin-bottom: 20px;">
-          <h3>â° Configured Meal Timings</h3>
+          <h3>⏰ Configured Meal Timings</h3>
           <div class="metrics" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
             <div class="metric"><small>Breakfast Timing</small><strong id="student-timing-bf" style="font-size:16px;">--</strong></div>
             <div class="metric"><small>Lunch Timing</small><strong id="student-timing-lunch" style="font-size:16px;">--</strong></div>
@@ -1591,7 +1591,7 @@
         </div>
 
         <div class="card">
-          <h3>ðŸ“… Weekly Timetable</h3>
+          <h3>📅 Weekly Timetable</h3>
           <div id="student-weekly-menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 14px;">
             <!-- Days list -->
           </div>
@@ -1602,7 +1602,7 @@
       <section id="student-announcements">
         <div class="title"><div><small>NOTICE BOARD</small><h2>Hostel Announcements</h2></div></div>
         <div class="card">
-          <h3>ðŸ“¢ Circulars & Bulletins</h3>
+          <h3>📢 Circulars & Bulletins</h3>
           <div id="student-full-announcements-list" style="margin-top: 14px;">
             <p style="color:#94a3b8;">Loading announcements...</p>
           </div>
@@ -1621,25 +1621,25 @@
             <div class="input-group">
               <label for="student-current-password">Current Password</label>
               <div class="input-wrapper">
-                <span class="input-icon">ðŸ”‘</span>
+                <span class="input-icon">🔑</span>
                 <input type="password" id="student-current-password" placeholder="Enter current password" required>
-                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
               </div>
             </div>
             <div class="input-group">
               <label for="student-new-password">New Password</label>
               <div class="input-wrapper">
-                <span class="input-icon">ðŸ”’</span>
+                <span class="input-icon">🔒</span>
                 <input type="password" id="student-new-password" placeholder="Minimum 6 characters" required minlength="6">
-                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
               </div>
             </div>
             <div class="input-group">
               <label for="student-confirm-new-password">Confirm New Password</label>
               <div class="input-wrapper">
-                <span class="input-icon">âœ”ï¸</span>
+                <span class="input-icon">✔️</span>
                 <input type="password" id="student-confirm-new-password" placeholder="Re-enter new password" required minlength="6">
-                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">ðŸ‘ï¸</button>
+                <button type="button" class="btn-toggle-pass" title="Show/Hide Password">👁️</button>
               </div>
             </div>
             <button type="submit" id="btn-submit-student-change-password" class="btn-primary">Update Password</button>
@@ -1662,14 +1662,14 @@
   <div id="modal-reject-payment" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:480px; border-top:5px solid #dc2626;">
       <div class="modal-header">
-        <h3 style="color:#b91c1c;">âŒ Reject Payment Submission</h3>
+        <h3 style="color:#b91c1c;">❌ Reject Payment Submission</h3>
         <button type="button" id="btn-close-reject-modal" class="modal-close">&times;</button>
       </div>
       <p class="modal-desc">Provide a clear reason for rejection. The student will see this reason in their transaction history.</p>
       <div style="margin-bottom:14px; padding:12px 14px; background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; font-size:13px; color:#991b1b;">
-        <strong>Student:</strong> <span id="reject-modal-student-name">â€”</span><br>
-        <strong>Amount:</strong> <span id="reject-modal-amount">â€”</span><br>
-        <strong>UTR:</strong> <span id="reject-modal-utr">â€”</span>
+        <strong>Student:</strong> <span id="reject-modal-student-name">—</span><br>
+        <strong>Amount:</strong> <span id="reject-modal-amount">—</span><br>
+        <strong>UTR:</strong> <span id="reject-modal-utr">—</span>
       </div>
       <label style="display:block; font-size:13px; font-weight:650; color:#334155; margin-bottom:14px;">Rejection Reason <span style="color:#dc2626;">*</span>
         <textarea id="reject-payment-reason" rows="3" placeholder="e.g. UTR number does not match our bank records. Please recheck and resubmit." style="margin-top:6px; width:100%;" required></textarea>
@@ -1686,7 +1686,7 @@
   <div id="modal-confirm-finalize" class="modal-overlay" style="display: none;">
     <div class="modal-card" style="max-width: 480px; border-top: 5px solid #059669;">
       <button type="button" id="btn-close-finalize-modal" class="modal-close">&times;</button>
-      <h3 style="color:#065f46; margin-bottom:12px;">ðŸ—“ï¸ Confirm Monthly Finalization</h3>
+      <h3 style="color:#065f46; margin-bottom:12px;">🗓️ Confirm Monthly Finalization</h3>
       <p id="finalize-confirm-message" style="font-size:14px; line-height:1.5; color:#334155; margin-bottom:20px;">
         Publishing September 2026 will finalize the attendance records and calculate student fees for this month. This action should not be reversed without administrator authorization.
       </p>
@@ -1701,7 +1701,7 @@
   <div id="modal-published-bill-details" class="modal-overlay" style="display: none;">
     <div class="modal-card" style="max-width: 760px; border-top: 5px solid #1d4ed8;">
       <div class="modal-header">
-        <h3 style="color:#1e40af;">ðŸ§¾ Published Bill â€” <span id="published-bill-details-title">â€”</span></h3>
+        <h3 style="color:#1e40af;">🧾 Published Bill — <span id="published-bill-details-title">—</span></h3>
         <button type="button" id="btn-close-published-bill-modal" class="modal-close">&times;</button>
       </div>
       <p class="modal-desc">Per-student finalized fee statements for this month. These are the immutable records students see in their portal.</p>
@@ -1711,11 +1711,11 @@
             <tr>
               <th>Roll No</th>
               <th>Student</th>
-              <th>Rent (â‚¹)</th>
-              <th>Mess (â‚¹)</th>
-              <th>Total (â‚¹)</th>
-              <th>Paid (â‚¹)</th>
-              <th>Pending (â‚¹)</th>
+              <th>Rent (₹)</th>
+              <th>Mess (₹)</th>
+              <th>Total (₹)</th>
+              <th>Paid (₹)</th>
+              <th>Pending (₹)</th>
             </tr>
           </thead>
           <tbody id="published-bill-details-tbody">
@@ -1733,7 +1733,7 @@
   <div id="modal-confirm-delete-published" class="modal-overlay" style="display: none;">
     <div class="modal-card" style="max-width: 480px; border-top: 5px solid #dc2626;">
       <button type="button" id="btn-close-delete-published-modal" class="modal-close">&times;</button>
-      <h3 style="color:#b91c1c; margin-bottom:12px;">ðŸ—‘ï¸ Delete Published Bill</h3>
+      <h3 style="color:#b91c1c; margin-bottom:12px;">🗑️ Delete Published Bill</h3>
       <p id="delete-published-confirm-message" style="font-size:14px; line-height:1.5; color:#334155; margin-bottom:20px;">
         This will permanently delete the published bill and unlock the month for editing.
       </p>
