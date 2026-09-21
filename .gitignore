@@ -12,8 +12,10 @@ node_modules/
 
 # Backend build artifacts
 backend/target/
+backend/BOOT-INF/
 *.class
 serviceAccountKey.json
+serviceAccountKey.*.json
 
 # OS / editor
 .DS_Store

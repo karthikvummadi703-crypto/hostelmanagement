@@ -50,8 +50,6 @@ export const firebaseConfig = {
   measurementId: "G-YRDLNS0YQ4"
 };
 
-export const isLiveFirebase = true;
-
 let app = null;
 let auth = null;
 let db = null;

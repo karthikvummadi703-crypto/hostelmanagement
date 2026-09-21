@@ -1,10 +1,9 @@
-// auth.js
+﻿// auth.js
 // Admin Authentication & Multi-Hostel Context Manager
 
 import { 
   auth, 
   db, 
-  isLiveFirebase, 
   getSecondaryAuth,
   signInWithEmailAndPassword, 
   signOut, 
@@ -22,79 +21,7 @@ import {
   query, 
   where, 
   serverTimestamp 
-} from "./firebase-config.js?v=20260920A";
-
-// ============================================================
-// SIMULATION STORE (Awaiting Live Database Values from User)
-// ============================================================
-// Only used when isLiveFirebase is false to allow immediate local verification.
-// Passwords are ONLY kept in simulated Auth accounts (never inside Firestore documents).
-const SIMULATED_AUTH_STORE = {
-  "admin@example.com": { uid: "UID_ADMIN_A", email: "admin@example.com", password: "adminPassword123" },
-  "admina@hostel.com": { uid: "UID_ADMIN_A", email: "admina@hostel.com", password: "adminPassword123" },
-  "adminb@hostel.com": { uid: "UID_ADMIN_B", email: "adminb@hostel.com", password: "adminPassword123" },
-  "rahul@hostel.com": { uid: "STU_001", email: "rahul@hostel.com", password: "studentPassword123" },
-  "23cse001@hostel.local": { uid: "STU_001", email: "rahul@hostel.com", password: "studentPassword123" },
-  "23cse001": { uid: "STU_001", email: "rahul@hostel.com", password: "studentPassword123" },
-  "vikram@hostel.com": { uid: "STU_002", email: "vikram@hostel.com", password: "studentPassword123" },
-  "23ece014@hostel.local": { uid: "STU_002", email: "vikram@hostel.com", password: "studentPassword123" },
-  "23ece014": { uid: "STU_002", email: "vikram@hostel.com", password: "studentPassword123" }
-};
-
-const SIMULATED_FIRESTORE = {
-  admins: {
-    "UID_ADMIN_A": {
-      name: "Hostel Admin (Sai)",
-      email: "admin@example.com",
-      role: "admin",
-      hostelId: "hostel_A",
-      status: "active"
-    },
-    "UID_ADMIN_B": {
-      name: "Hostel Admin (Vivek)",
-      email: "adminb@hostel.com",
-      role: "admin",
-      hostelId: "hostel_B",
-      status: "active"
-    }
-  },
-  hostels: {
-    "hostel_A": {
-      name: "Sri Sai Boys Hostel",
-      code: "H-A",
-      status: "active"
-    },
-    "hostel_B": {
-      name: "Vivekananda Hostel",
-      code: "H-B",
-      status: "active"
-    }
-  },
-  students: {
-    "STU_001": {
-      uid: "STU_001",
-      name: "Rahul Kumar",
-      email: "rahul@hostel.com",
-      rollNo: "23CSE001",
-      branchName: "CSE",
-      year: "3rd Year",
-      roomNo: "101",
-      hostelId: "hostel_A",
-      status: "active"
-    },
-    "STU_002": {
-      uid: "STU_002",
-      name: "Vikram Sen",
-      email: "vikram@hostel.com",
-      rollNo: "23ECE014",
-      branchName: "ECE",
-      year: "2nd Year",
-      roomNo: "204",
-      hostelId: "hostel_B",
-      status: "active"
-    }
-  }
-};
+} from "./firebase-config.js?v=20260921B";
 
 // ============================================================
 // ADMIN CONTEXT / AUTH CONTROLLER
@@ -139,8 +66,8 @@ class AdminAuthContext {
     this.loading = true;
     this.notify();
 
-    if (isLiveFirebase && auth) {
-      // Show UI immediately — never block user behind a spinner.
+    if (auth) {
+      // Show UI immediately â€” never block user behind a spinner.
       // Fire a very short safety timer (300ms) so the login page
       // is always visible even if Firebase SDK hasn't loaded yet.
       const safetyTimer = setTimeout(() => {
@@ -155,26 +82,15 @@ class AdminAuthContext {
       onAuthStateChanged(auth, async (firebaseUser) => {
         clearTimeout(safetyTimer);
         if (!firebaseUser) {
-          const savedUid = sessionStorage.getItem("hostel_simulated_admin_uid");
-          if (savedUid) {
-            try {
-              await this.loadAdminAndHostel(savedUid);
-            } catch (e) {
-              sessionStorage.removeItem("hostel_simulated_admin_uid");
-              this.currentAdmin = null;
-              this.currentHostel = null;
-            }
-          } else {
-            this.currentAdmin = null;
-            this.currentHostel = null;
-          }
+          this.currentAdmin = null;
+          this.currentHostel = null;
           this.loading = false;
           this.notify();
           this.enforceRouteGuard();
           return;
         }
 
-        // User was already logged in — load their profile silently in background
+        // User was already logged in â€” load their profile silently in background
         try {
           await this.loadAdminAndHostel(firebaseUser.uid, firebaseUser.email);
         } catch (err) {
@@ -189,21 +105,6 @@ class AdminAuthContext {
           this.enforceRouteGuard();
         }
       });
-    } else {
-      // Local session check for testing
-      const savedUid = sessionStorage.getItem("hostel_simulated_admin_uid");
-      if (savedUid) {
-        try {
-          await this.loadAdminAndHostel(savedUid);
-        } catch (e) {
-          sessionStorage.removeItem("hostel_simulated_admin_uid");
-          this.currentAdmin = null;
-          this.currentHostel = null;
-        }
-      }
-      this.loading = false;
-      this.notify();
-      this.enforceRouteGuard();
     }
   }
 
@@ -215,7 +116,7 @@ class AdminAuthContext {
     this.error = null;
     this.notify();
 
-    if (isLiveFirebase && db) {
+    if (db) {
       // 1. Read admins/{uid} safely
       let adminSnap = null;
       try {
@@ -270,6 +171,9 @@ class AdminAuthContext {
         if (studentSnap && studentSnap.exists()) {
           const studentData = studentSnap.data();
           const targetHostelId = studentData.hostelId;
+          if (!targetHostelId) {
+            throw new Error("Student profile is not assigned to any hostel.");
+          }
 
           let hostelData = { name: "Hostel Portal" };
           if (targetHostelId) {
@@ -287,111 +191,29 @@ class AdminAuthContext {
             email: studentData.email || fallbackEmail,
             role: "student",
             rollNo: studentData.rollNo,
-            hostelId: targetHostelId || "hostel_A",
+            hostelId: targetHostelId,
             status: studentData.status || "active"
           };
 
           this.currentHostel = {
-            id: targetHostelId || "hostel_A",
+            id: targetHostelId,
             name: hostelData.name || "Hostel Portal",
             code: hostelData.code || "",
             status: hostelData.status || "active",
             ...hostelData
           };
         } else {
-          // Fallback to SIMULATED_FIRESTORE or email matching if profile missing in Live Firestore
-          const lowerEmail = (fallbackEmail || "").toLowerCase();
-          const mappedAuth = SIMULATED_AUTH_STORE[lowerEmail] || SIMULATED_AUTH_STORE[lowerEmail.split('@')[0]];
-          
-          let simAdmin = SIMULATED_FIRESTORE.admins[uid] || (mappedAuth ? SIMULATED_FIRESTORE.admins[mappedAuth.uid] : null);
-          let simStudent = SIMULATED_FIRESTORE.students[uid] || (mappedAuth ? SIMULATED_FIRESTORE.students[mappedAuth.uid] : null);
-
-          if (!simAdmin && !simStudent && lowerEmail) {
-            simAdmin = Object.values(SIMULATED_FIRESTORE.admins).find(a => a.email && a.email.toLowerCase() === lowerEmail);
-            simStudent = Object.values(SIMULATED_FIRESTORE.students).find(s => s.email && s.email.toLowerCase() === lowerEmail);
-          }
-
-          // Guaranteed default profile fallback for any valid Firebase Auth login
-          if (!simAdmin && !simStudent) {
-            const isStudentEmail = lowerEmail.includes("student") || lowerEmail.includes("stu") || /^[0-9]/.test(lowerEmail);
-            if (isStudentEmail) {
-              simStudent = {
-                uid: uid,
-                name: fallbackEmail ? fallbackEmail.split("@")[0].toUpperCase() : "Student Resident",
-                email: fallbackEmail,
-                rollNo: fallbackEmail ? fallbackEmail.split("@")[0].toUpperCase() : "STU_NEW",
-                hostelId: "hostel_A",
-                status: "active"
-              };
-            } else {
-              simAdmin = {
-                uid: uid,
-                name: fallbackEmail ? fallbackEmail.split("@")[0] : "Hostel Admin",
-                email: fallbackEmail,
-                role: "admin",
-                hostelId: "hostel_A",
-                status: "active"
-              };
-            }
-          }
-
-          if (simAdmin) {
-            const hId = simAdmin.hostelId || "hostel_A";
-            const hData = SIMULATED_FIRESTORE.hostels[hId] || { name: "Sri Sai Boys Hostel", code: "H-A" };
-            this.currentAdmin = { uid, name: simAdmin.name, email: simAdmin.email || fallbackEmail, role: simAdmin.role || "admin", hostelId: hId, status: "active" };
-            this.currentHostel = { id: hId, name: hData.name, code: hData.code || "", status: "active", ...hData };
-          } else if (simStudent) {
-            const hId = simStudent.hostelId || "hostel_A";
-            const hData = SIMULATED_FIRESTORE.hostels[hId] || { name: "Sri Sai Boys Hostel", code: "H-A" };
-            this.currentAdmin = { uid, name: simStudent.name, email: simStudent.email || fallbackEmail, role: "student", rollNo: simStudent.rollNo || "STU_001", hostelId: hId, status: "active" };
-            this.currentHostel = { id: hId, name: hData.name, code: hData.code || "", status: "active", ...hData };
-          }
+          // No provisioned profile exists for this account in Live Firestore.
+          // Deliberately do NOT synthesize a demo/default admin profile here:
+          // that behavior allowed ANY valid Firebase Auth account to become an
+          // admin of a hostel (hostel_A) and access real data. Instead, require
+          // a real admins/{uid} or students/{uid} document to exist.
+          throw new Error(
+            "This account is not provisioned in the hostel system. " +
+            "An Administrator or Student Resident profile must exist in Firestore before login."
+          );
         }
       }
-    } else {
-      // Simulation logic
-      let adminData = SIMULATED_FIRESTORE.admins[uid] || SIMULATED_FIRESTORE.students[uid];
-      let isStudentRole = false;
-
-      if (!adminData && fallbackEmail) {
-        const lowerEmail = fallbackEmail.toLowerCase();
-        const mapped = SIMULATED_AUTH_STORE[lowerEmail] || SIMULATED_AUTH_STORE[lowerEmail.split('@')[0]];
-        if (mapped) {
-          adminData = SIMULATED_FIRESTORE.admins[mapped.uid] || SIMULATED_FIRESTORE.students[mapped.uid];
-        }
-      }
-
-      if (!adminData) {
-        // Fallback default admin
-        adminData = SIMULATED_FIRESTORE.admins["UID_ADMIN_A"];
-      }
-      if (adminData.status !== "active") {
-        throw new Error("Your account is inactive.");
-      }
-      const targetHostelId = adminData.hostelId || adminData.hostelid;
-      if (!targetHostelId) {
-        throw new Error("Account is not assigned to any hostel.");
-      }
-
-      const hostelData = SIMULATED_FIRESTORE.hostels[targetHostelId] || { name: "Sri Sai Boys Hostel", code: "H-A" };
-
-      this.currentAdmin = {
-        uid: uid,
-        name: adminData.name || adminData.rollNo || "User",
-        email: adminData.email || "",
-        role: isStudentRole ? "student" : (adminData.role || "admin"),
-        rollNo: adminData.rollNo,
-        hostelId: targetHostelId,
-        status: adminData.status || "active"
-      };
-
-      this.currentHostel = {
-        id: targetHostelId,
-        name: hostelData.name || targetHostelId,
-        code: hostelData.code || "",
-        status: hostelData.status || "active",
-        ...hostelData
-      };
     }
 
     this.loadingHostel = false;
@@ -440,32 +262,13 @@ class AdminAuthContext {
     this.notify();
 
     try {
-      if (isLiveFirebase && auth) {
-        // Authenticate with Live Firebase Auth
-        let userCred;
-        try {
-          userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-          const uid = userCred.user.uid;
-          await this.loadAdminAndHostel(uid, userCred.user.email);
-        } catch (liveAuthErr) {
-          // Check if user entered a simulated demo account (e.g. admin@example.com / rahul@hostel.com)
-          const authUser = SIMULATED_AUTH_STORE[cleanEmail] || SIMULATED_AUTH_STORE[rawInput];
-          if (authUser && authUser.password === password) {
-            sessionStorage.setItem("hostel_simulated_admin_uid", authUser.uid);
-            await this.loadAdminAndHostel(authUser.uid, cleanEmail);
-          } else {
-            throw liveAuthErr;
-          }
-        }
-      } else {
-        // Simulated authentication
-        const authUser = SIMULATED_AUTH_STORE[cleanEmail] || SIMULATED_AUTH_STORE[rawInput];
-        if (!authUser || authUser.password !== password) {
-          throw new Error("Invalid email/roll number or password.");
-        }
-
-        sessionStorage.setItem("hostel_simulated_admin_uid", authUser.uid);
-        await this.loadAdminAndHostel(authUser.uid, cleanEmail);
+      if (auth) {
+        // Authenticate with Live Firebase Auth. This application is
+        // official-use only â€” there is no simulation or demo-credential
+        // fallback; accounts must be provisioned in Firebase Auth AND Firestore.
+        const userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        const uid = userCred.user.uid;
+        await this.loadAdminAndHostel(uid, userCred.user.email);
       }
 
       // Enforce role matching between selected UI tab and actual account profile
@@ -509,10 +312,8 @@ class AdminAuthContext {
     this.notify();
 
     try {
-      if (isLiveFirebase && auth) {
+      if (auth) {
         await signOut(auth);
-      } else {
-        sessionStorage.removeItem("hostel_simulated_admin_uid");
       }
     } catch (err) {
       console.error("Logout error:", err);
@@ -536,13 +337,8 @@ class AdminAuthContext {
     }
 
     try {
-      if (isLiveFirebase && auth) {
+      if (auth) {
         await sendPasswordResetEmail(auth, cleanEmail);
-        return "Password reset email sent. Please check your inbox.";
-      } else {
-        if (!SIMULATED_AUTH_STORE[cleanEmail]) {
-          throw new Error("No admin account found with this email address.");
-        }
         return "Password reset email sent. Please check your inbox.";
       }
     } catch (err) {
@@ -573,7 +369,7 @@ class AdminAuthContext {
 
     // Candidate login emails, tried in priority order.
     // App-provisioned students ALWAYS have auth email <roll>@hostel.local, regardless of
-    // any later edit to the display-only "email" profile field — so that goes first.
+    // any later edit to the display-only "email" profile field â€” so that goes first.
     // The Firestore profile email is a fallback for accounts created in Firebase Console
     // with a custom email.
     const candidates = [];
@@ -581,7 +377,7 @@ class AdminAuthContext {
       candidates.push(lowerRaw);
     } else {
       candidates.push(`${lowerRaw}@hostel.local`);
-      if (isLiveFirebase && db) {
+      if (db) {
         try {
           const q = query(collection(db, "students"), where("rollNo", "==", rawInput.toUpperCase()));
           const snap = await getDocs(q);
@@ -602,14 +398,14 @@ class AdminAuthContext {
     const uniqueEmails = [...new Set(candidates.filter(e => /@/.test(e)))];
 
     try {
-      if (isLiveFirebase && auth) {
+      if (auth) {
         const secAuth = await getSecondaryAuth();
         if (!secAuth) {
           throw new Error("Could not initialize authentication provider.");
         }
 
         // PRIMARY: the student is already signed in on the main auth instance
-        // (student portal). Re-authenticate that exact account — immune to any
+        // (student portal). Re-authenticate that exact account â€” immune to any
         // email-scheme mismatch, because the session already knows its own account.
         const currentUser = auth.currentUser;
         if (currentUser && (currentUser.email || "").toLowerCase()) {
@@ -665,19 +461,6 @@ class AdminAuthContext {
         }
         console.error("[changeStudentPassword] All sign-in attempts failed. Tried emails:", uniqueEmails, "lastError:", lastErr);
         throw lastErr || new Error("Invalid roll number or current password.");
-      } else {
-        const authUser = SIMULATED_AUTH_STORE[uniqueEmails[0]] || SIMULATED_AUTH_STORE[lowerRaw] || SIMULATED_AUTH_STORE[rawInput];
-        if (!authUser || authUser.password !== password) {
-          throw new Error("Invalid roll number or current password.");
-        }
-        // Update every store entry mapped to this account (roll key, email key, shared uid/email)
-        Object.keys(SIMULATED_AUTH_STORE).forEach(k => {
-          const entry = SIMULATED_AUTH_STORE[k];
-          if (k === uniqueEmails[0] || k === lowerRaw || k === rawInput || (entry && entry.email === authUser.email) || (entry && entry.uid === authUser.uid)) {
-            entry.password = newPassword;
-          }
-        });
-        return "Password updated successfully.";
       }
     } catch (err) {
       let msg = err.message;
@@ -721,7 +504,7 @@ class AdminAuthContext {
       throw new Error("Cannot create student: Admin is not associated with any hostel.");
     }
 
-    if (isLiveFirebase && auth && db) {
+    if (auth && db) {
       const secAuth = await getSecondaryAuth();
       if (!secAuth) {
         throw new Error("Could not initialize secondary authentication provider.");
@@ -752,29 +535,8 @@ class AdminAuthContext {
 
       await setDoc(doc(db, "students", studentUid), studentDoc);
       return { success: true, uid: studentUid, student: studentDoc };
-    } else {
-      // Simulation
-      const studentUid = "STU_" + Math.random().toString(36).substring(2, 9).toUpperCase();
-      
-      const studentDoc = {
-        uid: studentUid,
-        rollNo: cleanRoll,
-        name: cleanName,
-        email: cleanEmail,
-        branchName: branch || "CSE",
-        year: year || "1st Year",
-        joiningMonth: cleanJoiningMonth,
-        hostelId: targetHostelId,
-        roomNo: "Unassigned",
-        status: "active",
-        createdAt: new Date().toISOString()
-      };
-
-      SIMULATED_FIRESTORE.students[studentUid] = studentDoc;
-      return { success: true, uid: studentUid, student: studentDoc };
     }
   }
 }
 
 export const adminAuthContext = new AdminAuthContext();
-export { SIMULATED_FIRESTORE };

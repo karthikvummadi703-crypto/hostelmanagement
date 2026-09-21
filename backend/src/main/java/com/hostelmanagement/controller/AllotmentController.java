@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/allotments")
-@CrossOrigin(origins = "*")
 public class AllotmentController {
 
     private final AllotmentService allotmentService;

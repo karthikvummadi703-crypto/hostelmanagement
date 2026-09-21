@@ -3,106 +3,152 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ------------------------------------------------------------
+    // ============================================================
     // IDENTITY HELPERS
-    // ------------------------------------------------------------
-    function isAuthenticated() {
+    // ============================================================
+
+    function isSignedIn() {
       return request.auth != null;
+    }
+
+    function adminOf(uid) {
+      let path = /databases/$(database)/documents/admins/$(uid);
+      return exists(path) ? get(path).data : null;
+    }
+
+    function studentOf(uid) {
+      let path = /databases/$(database)/documents/students/$(uid);
+      return exists(path) ? get(path).data : null;
+    }
+
+    // The hostel the signed-in user belongs to, resolved from their
+    // admin or student profile document. This is the single source of
+    // truth for tenant scoping — an account cannot be assigned to more
+    // than one hostel, so cross-hostel data is unreachable.
+    function callerHostelId() {
+      let admin = adminOf(request.auth.uid);
+      if (admin != null && admin.hostelId != null) return admin.hostelId;
+      let student = studentOf(request.auth.uid);
+      if (student != null && student.hostelId != null) return student.hostelId;
+      return null;
+    }
+
+    // True when the signed-in caller has a management profile
+    function callerIsAdmin() {
+      return adminOf(request.auth.uid) != null;
+    }
+
+    // The hostelId of the document being written (post-write state for
+    // creates/updates, existing state for deletes).
+    function targetHostelId() {
+      return request.resource != null ? request.resource.data.hostelId : resource.data.hostelId;
+    }
+
+    // Head of security: every business document carries a hostelId and the
+    // caller may only touch documents belonging to their own hostel.
+    function ownHostel() {
+      return isSignedIn()
+        && callerHostelId() != null
+        && callerHostelId() == targetHostelId();
     }
 
     // ------------------------------------------------------------
     // ADMIN PROFILES
-    // Read: Any authenticated user (allows non-admin check without exception)
-    // Write: Authenticated admin for their own profile
+    // Read: any signed-in user (needed for role/status checks).
+    // Write: only the admin writing their own profile document.
     // ------------------------------------------------------------
     match /admins/{adminId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == adminId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == adminId;
     }
 
     // ------------------------------------------------------------
     // HOSTEL METADATA
+    // Read/write: only for the caller's own hostel.
     // ------------------------------------------------------------
     match /hostels/{hostelId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isSignedIn() && callerHostelId() == hostelId;
     }
 
     // ------------------------------------------------------------
     // STUDENT PROFILES
+    // Read: caller's own hostel (admins) or the caller's own record.
+    // Write: hostel admins, or the student updating their own record
+    // without changing their hostelId.
     // ------------------------------------------------------------
     match /students/{studentId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isSignedIn()
+        && (ownHostel() || studentId == request.auth.uid);
+      allow write: if isSignedIn()
+        && ((ownHostel() && callerIsAdmin())
+            || (studentId == request.auth.uid && request.resource.data.hostelId == callerHostelId()));
     }
 
     // ------------------------------------------------------------
     // ACADEMIC BRANCHES
     // ------------------------------------------------------------
     match /branches/{branchId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // ROOMS & ACCOMMODATION
     // ------------------------------------------------------------
     match /rooms/{roomId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // ATTENDANCE RECORDS
     // ------------------------------------------------------------
     match /attendance/{attendanceId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // COMPLAINTS & SUPPORT TICKETS
     // ------------------------------------------------------------
     match /complaints/{complaintId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // ANNOUNCEMENTS & BULLETINS
     // ------------------------------------------------------------
     match /announcements/{announcementId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // PAYMENTS & UTR RECEIPTS
     // ------------------------------------------------------------
     match /payments/{paymentId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // ------------------------------------------------------------
-    // MESS SCHEDULES & PRICING
-    // ------------------------------------------------------------
-    match /mess/{messId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // MONTHLY FEE CONFIGURATIONS
     // ------------------------------------------------------------
     match /fees/{feeId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // MONTHLY FINALIZATION LOCKS
     // ------------------------------------------------------------
     match /monthlyFinalizations/{finId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
     // ------------------------------------------------------------
     // FINALIZED FEE STATEMENTS
     // ------------------------------------------------------------
     match /finalizedFees/{feeId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if ownHostel();
     }
 
+    // ------------------------------------------------------------
+    // Everything not explicitly matched above is DENIED by default.
+    // ------------------------------------------------------------
   }
 }

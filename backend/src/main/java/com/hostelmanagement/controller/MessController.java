@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mess")
-@CrossOrigin(origins = "*")
 public class MessController {
 
     private final MessService messService;
